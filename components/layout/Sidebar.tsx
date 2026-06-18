@@ -23,6 +23,34 @@ import {
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
+// 东方美学深色调色板 — 以 #50677D 为基调
+const COLORS = {
+  bgGradient:     "linear-gradient(175deg, #3D5265 0%, #50677D 40%, #445B6F 100%)",
+  text:           "#F0EDE8",
+  textMuted:      "rgba(240,237,232,0.45)",
+  textDim:        "rgba(240,237,232,0.28)",
+  border:         "rgba(240,237,232,0.10)",
+  hoverBg:        "rgba(240,237,232,0.07)",
+  activeBg:       "linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04))",
+  activeBorder:   "rgba(251,191,36,0.25)",
+  activeText:     "#FBBF24",
+  indicatorGrad:  "linear-gradient(180deg, #fbbf24, #b45309)",
+  childActive:    "#FBBF24",
+  childActiveBg:  "linear-gradient(135deg, rgba(251,191,36,0.10), rgba(180,83,9,0.04))",
+  logoFilter:     "brightness(0) invert(1)",  // logo 反白
+  mobileBg:       "#50677D",
+  mobileBorder:   "rgba(240,237,232,0.20)",
+  logoutText:     "rgba(240,237,232,0.35)",
+  logoutHoverBg:  "rgba(220,38,38,0.15)",
+  logoutHoverText:"rgba(248,113,113,0.9)",
+  copyright:      "rgba(240,237,232,0.20)",
+  avatarBorder:   "rgba(251,191,36,0.20)",
+  userRoleText:   "rgba(240,237,232,0.40)",
+  submenuText:    "rgba(240,237,232,0.50)",
+  submenuHover:   "rgba(240,237,232,0.75)",
+  expandArrow:    "rgba(240,237,232,0.40)",
+} as const;
+
 const navItems = [
   { href: "/dashboard",  label: "总览",     icon: LayoutDashboard },
   { href: "/series",     label: "七序管理", icon: Layers },
@@ -79,7 +107,7 @@ export default function Sidebar() {
       {/* Mobile toggle */}
       <button
         className="fixed top-4 left-4 z-50 lg:hidden flex items-center justify-center w-9 h-9 rounded-lg shadow-md"
-        style={{ background: "#EDE6DA", color: "#3D3226", border: "1px solid rgba(61,50,38,0.15)" }}
+        style={{ background: COLORS.mobileBg, color: COLORS.text, border: `1px solid ${COLORS.mobileBorder}` }}
         onClick={() => setOpen(!open)}
       >
         {open ? <X size={18} /> : <Menu size={18} />}
@@ -88,7 +116,7 @@ export default function Sidebar() {
       {/* Overlay */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/25 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/35 z-30 lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
@@ -99,14 +127,14 @@ export default function Sidebar() {
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
         style={{
-          background: "linear-gradient(175deg, #F7F3EC 0%, #EDE6DA 50%, #F7F3EC 100%)",
-          boxShadow: "4px 0 24px rgba(0,0,0,0.06)",
+          background: COLORS.bgGradient,
+          boxShadow: "4px 0 32px rgba(0,0,0,0.25)",
         }}
       >
         {/* Logo */}
-        <div style={{ padding: "32px 20px 24px", borderBottom: "1px solid rgba(61,50,38,0.08)" }}>
+        <div style={{ padding: "32px 20px 24px", borderBottom: `1px solid ${COLORS.border}` }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            {/* Logo Image - 白色/卡其色滤镜 */}
+            {/* Logo Image — 反白处理确保清晰 */}
             <div style={{
               position: "relative",
               width: 72,
@@ -115,9 +143,9 @@ export default function Sidebar() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "linear-gradient(135deg, rgba(180,83,9,0.12), rgba(180,83,9,0.04))",
-              border: "1px solid rgba(180,83,9,0.15)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4)",
+              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
             }}>
               <img
                 src="/logo.png"
@@ -126,7 +154,7 @@ export default function Sidebar() {
                   width: 56,
                   height: 56,
                   objectFit: "contain",
-                  filter: "brightness(0.4)",
+                  filter: COLORS.logoFilter,
                 }}
               />
             </div>
@@ -135,7 +163,7 @@ export default function Sidebar() {
                 margin: 0,
                 fontSize: "1.3rem",
                 fontWeight: 700,
-                color: "#3D3226",
+                color: COLORS.text,
                 letterSpacing: "0.15em",
                 fontFamily: "var(--font-serif-zh), serif",
               }}>
@@ -144,7 +172,7 @@ export default function Sidebar() {
               <p style={{
                 margin: "4px 0 0 0",
                 fontSize: "0.65rem",
-                color: "rgba(61,50,38,0.45)",
+                color: COLORS.textMuted,
                 letterSpacing: "0.08em",
               }}>
                 让物归物，让心归心
@@ -170,11 +198,9 @@ export default function Sidebar() {
                     display: "flex", alignItems: "center", gap: 11,
                     padding: "10px 14px", borderRadius: 10,
                     fontSize: "0.85rem", fontWeight: isActive ? 600 : 400,
-                    color: isActive ? "#3D3226" : "rgba(61,50,38,0.55)",
-                    background: isActive
-                      ? "linear-gradient(135deg, rgba(180,83,9,0.08), rgba(180,83,9,0.03))"
-                      : "transparent",
-                    border: isActive ? "1px solid rgba(180,83,9,0.18)" : "1px solid transparent",
+                    color: isActive ? COLORS.activeText : COLORS.textMuted,
+                    background: isActive ? COLORS.activeBg : "transparent",
+                    border: isActive ? `1px solid ${COLORS.activeBorder}` : "1px solid transparent",
                     transition: "all 0.2s ease",
                     textDecoration: "none",
                     marginBottom: 3,
@@ -183,14 +209,14 @@ export default function Sidebar() {
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      (e.target as HTMLElement).style.background = "rgba(61,50,38,0.05)";
-                      (e.target as HTMLElement).style.color = "rgba(61,50,38,0.85)";
+                      (e.target as HTMLElement).style.background = COLORS.hoverBg;
+                      (e.target as HTMLElement).style.color = COLORS.text;
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       (e.target as HTMLElement).style.background = "transparent";
-                      (e.target as HTMLElement).style.color = "rgba(61,50,38,0.55)";
+                      (e.target as HTMLElement).style.color = COLORS.textMuted;
                     }
                   }}
                 >
@@ -201,11 +227,11 @@ export default function Sidebar() {
                       transform: "translateY(-50%)",
                       width: 3, height: 20,
                       borderRadius: "0 2px 2px 0",
-                      background: "linear-gradient(180deg, #fbbf24, #b45309)",
-                      boxShadow: "0 0 8px rgba(251,191,36,0.3)",
+                      background: COLORS.indicatorGrad,
+                      boxShadow: "0 0 8px rgba(251,191,36,0.4)",
                     }} />
                   )}
-                  <item.icon size={17} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.55 }} />
+                  <item.icon size={17} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.5 }} />
                   {item.label}
                 </Link>
               );
@@ -220,11 +246,9 @@ export default function Sidebar() {
                     display: "flex", alignItems: "center", gap: 11,
                     width: "100%", padding: "10px 14px", borderRadius: 10,
                     fontSize: "0.85rem", fontWeight: isParentActive ? 600 : 400,
-                    color: isParentActive ? "#3D3226" : "rgba(61,50,38,0.55)",
-                    background: isParentActive
-                      ? "linear-gradient(135deg, rgba(180,83,9,0.08), rgba(180,83,9,0.03))"
-                      : "transparent",
-                    border: isParentActive ? "1px solid rgba(180,83,9,0.18)" : "1px solid transparent",
+                    color: isParentActive ? COLORS.activeText : COLORS.textMuted,
+                    background: isParentActive ? COLORS.activeBg : "transparent",
+                    border: isParentActive ? `1px solid ${COLORS.activeBorder}` : "1px solid transparent",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     marginBottom: 3,
@@ -232,14 +256,14 @@ export default function Sidebar() {
                   }}
                   onMouseEnter={(e) => {
                     if (!isParentActive) {
-                      e.currentTarget.style.background = "rgba(61,50,38,0.05)";
-                      e.currentTarget.style.color = "rgba(61,50,38,0.85)";
+                      e.currentTarget.style.background = COLORS.hoverBg;
+                      e.currentTarget.style.color = COLORS.text;
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isParentActive) {
                       e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(61,50,38,0.55)";
+                      e.currentTarget.style.color = COLORS.textMuted;
                     }
                   }}
                 >
@@ -250,11 +274,11 @@ export default function Sidebar() {
                       transform: "translateY(-50%)",
                       width: 3, height: 20,
                       borderRadius: "0 2px 2px 0",
-                      background: "linear-gradient(180deg, #fbbf24, #b45309)",
-                      boxShadow: "0 0 8px rgba(251,191,36,0.3)",
+                      background: COLORS.indicatorGrad,
+                      boxShadow: "0 0 8px rgba(251,191,36,0.4)",
                     }} />
                   )}
-                  <item.icon size={17} style={{ flexShrink: 0, opacity: isParentActive ? 1 : 0.55 }} />
+                  <item.icon size={17} style={{ flexShrink: 0, opacity: isParentActive ? 1 : 0.5 }} />
                   <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
                   <svg
                     width="12"
@@ -268,7 +292,7 @@ export default function Sidebar() {
                     style={{
                       transform: expanded === item.href ? "rotate(90deg)" : "rotate(0deg)",
                       transition: "transform 0.25s ease",
-                      opacity: 0.45,
+                      opacity: 0.4,
                       flexShrink: 0,
                     }}
                   >
@@ -295,10 +319,8 @@ export default function Sidebar() {
                             display: "flex", alignItems: "center", gap: 9,
                             padding: "8px 14px", borderRadius: 8,
                             fontSize: "0.8rem", fontWeight: childActive ? 600 : 400,
-                            color: childActive ? "#b45309" : "rgba(61,50,38,0.45)",
-                            background: childActive
-                              ? "linear-gradient(135deg, rgba(251,191,36,0.10), rgba(180,83,9,0.04))"
-                              : "transparent",
+                            color: childActive ? COLORS.childActive : COLORS.submenuText,
+                            background: childActive ? COLORS.childActiveBg : "transparent",
                             border: childActive ? "1px solid rgba(251,191,36,0.18)" : "1px solid transparent",
                             transition: "all 0.2s ease",
                             textDecoration: "none",
@@ -306,14 +328,14 @@ export default function Sidebar() {
                           }}
                           onMouseEnter={(e) => {
                             if (!childActive) {
-                              (e.target as HTMLElement).style.background = "rgba(61,50,38,0.04)";
-                              (e.target as HTMLElement).style.color = "rgba(61,50,38,0.7)";
+                              (e.target as HTMLElement).style.background = COLORS.hoverBg;
+                              (e.target as HTMLElement).style.color = COLORS.submenuHover;
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!childActive) {
                               (e.target as HTMLElement).style.background = "transparent";
-                              (e.target as HTMLElement).style.color = "rgba(61,50,38,0.45)";
+                              (e.target as HTMLElement).style.color = COLORS.submenuText;
                             }
                           }}
                         >
@@ -331,7 +353,7 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div style={{
-          borderTop: "1px solid rgba(61,50,38,0.08)",
+          borderTop: `1px solid ${COLORS.border}`,
         }}>
           {/* User Info */}
           {session?.user && (
@@ -343,8 +365,8 @@ export default function Sidebar() {
                 width: 32, height: 32, borderRadius: 10,
                 overflow: "hidden",
                 flexShrink: 0,
-                background: "linear-gradient(135deg, rgba(180,83,9,0.15), rgba(120,60,10,0.06))",
-                border: "1px solid rgba(180,83,9,0.15)",
+                background: "rgba(255,255,255,0.10)",
+                border: `1px solid ${COLORS.avatarBorder}`,
               }}>
                 {(session.user as any).avatar ? (
                   <img
@@ -362,7 +384,7 @@ export default function Sidebar() {
                     width: "100%", height: "100%",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: "0.8rem", fontWeight: 600,
-                    color: "#3D3226",
+                    color: COLORS.text,
                   }}>
                     {(session.user.name || session.user.email || "A").charAt(0).toUpperCase()}
                   </div>
@@ -371,14 +393,14 @@ export default function Sidebar() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   margin: 0, fontSize: "0.78rem", fontWeight: 500,
-                  color: "rgba(61,50,38,0.8)",
+                  color: COLORS.text,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {session.user.name || session.user.email}
                 </p>
                 <p style={{
                   margin: 0, fontSize: "0.65rem",
-                  color: "rgba(61,50,38,0.4)",
+                  color: COLORS.userRoleText,
                 }}>
                   {(session.user as any).role === "admin" ? "管理员" : "用户"}
                 </p>
@@ -393,17 +415,17 @@ export default function Sidebar() {
               style={{
                 display: "flex", alignItems: "center", gap: 8,
                 width: "100%", padding: "8px 10px", borderRadius: 8,
-                fontSize: "0.74rem", color: "rgba(246,241,235,0.4)",
+                fontSize: "0.74rem", color: COLORS.logoutText,
                 background: "transparent", border: "none", cursor: "pointer",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(220,38,38,0.08)";
-                e.currentTarget.style.color = "rgba(220,38,38,0.8)";
+                e.currentTarget.style.background = COLORS.logoutHoverBg;
+                e.currentTarget.style.color = COLORS.logoutHoverText;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "rgba(61,50,38,0.35)";
+                e.currentTarget.style.color = COLORS.logoutText;
               }}
             >
               <LogOut size={13} />
@@ -413,7 +435,7 @@ export default function Sidebar() {
 
           <div style={{
             padding: "0 24px 14px",
-            fontSize: "0.62rem", color: "rgba(61,50,38,0.25)", letterSpacing: "0.05em",
+            fontSize: "0.62rem", color: COLORS.copyright, letterSpacing: "0.05em",
           }}>
             © 2026  允物品牌
           </div>
