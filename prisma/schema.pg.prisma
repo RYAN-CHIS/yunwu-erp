@@ -235,3 +235,73 @@ model Bom {
   @@unique([skuId, materialId])
   @@map("bom")
 }
+
+/// ========== 客户与订单管理 ==========
+
+enum OrderChannel {
+  MINIPROGRAM
+  WEBSITE
+  MANUAL
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+model Customer {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  name        String
+  phone       String?
+  email       String?
+  wechat      String?   @map("wechat")
+  source      OrderChannel?
+  address     String?
+  tags        String?
+  notes       String?
+  orders      Order[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  @@map("customers")
+}
+
+model Order {
+  id            Int            @id @default(autoincrement())
+  orderNo       String         @unique  @map("order_no")
+  customerId    Int            @map("customer_id")
+  customer      Customer       @relation(fields: [customerId], references: [id])
+  channel       OrderChannel   @default(MANUAL)
+  status        OrderStatus    @default(PENDING)
+  paymentStatus PaymentStatus  @default(UNPAID) @map("payment_status")
+
+  items         String
+  subtotal      Float          @default(0)
+  discount      Float          @default(0)
+  totalAmount    Float          @default(0)  @map("total_amount")
+  paidAmount     Float          @default(0)  @map("paid_amount")
+  shippingFee    Float          @default(0)  @map("shipping_fee")
+
+  platformOrderNo String?      @map("platform_order_no")
+  shippingAddress String?      @map("shipping_address")
+  deliveryDate    DateTime?    @map("delivery_date")
+  notes           String?
+
+  createdBy       Int?         @map("created_by")
+  orderDate       DateTime     @default(now()) @map("order_date")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("orders")
+}

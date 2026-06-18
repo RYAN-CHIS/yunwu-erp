@@ -16,6 +16,9 @@ import {
   Layers,
   LogOut,
   Settings,
+  Users,
+  ShoppingCart,
+  Receipt,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -40,6 +43,15 @@ const navItems = [
   { href: "/bom",        label: "BOM",       icon: Layers },
   { href: "/costs",      label: "成本核算", icon: DollarSign },
   { href: "/inventory",  label: "库存池",   icon: Warehouse },
+  {
+    href: "/orders",
+    label: "销售管理",
+    icon: ShoppingCart,
+    children: [
+      { href: "/orders",    label: "订单管理", icon: "📋" },
+      { href: "/customers", label: "客户管理", icon: "👤" },
+    ],
+  },
   { href: "/import",     label: "数据导入", icon: Upload },
   { href: "/settings",   label: "系统设置", icon: Settings },
 ];
@@ -49,14 +61,17 @@ export default function Sidebar() {
   const searchParams = useSearchParams();
   const currentView = searchParams.get("view");
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState<string | false>(false);
 
   // Session
   const { data: session } = useSession();
 
-  // 路由变化时自动展开/收起原材料子菜单
+  // 路由变化时自动展开/收起对应的父级菜单
   useEffect(() => {
-    setExpanded(pathname.startsWith("/materials"));
+    const parentItem = navItems.find(
+      (item) => "children" in item && item.children?.some((child) => pathname.startsWith(child.href.split("?")[0]))
+    );
+    setExpanded(!!parentItem ? parentItem.href : false);
   }, [pathname]);
 
   return (
@@ -201,7 +216,7 @@ export default function Sidebar() {
             return (
               <div key={item.href}>
                 <button
-                  onClick={() => setExpanded(!expanded)}
+                  onClick={() => setExpanded(expanded === item.href ? false : item.href)}
                   style={{
                     display: "flex", alignItems: "center", gap: 11,
                     width: "100%", padding: "10px 14px", borderRadius: 10,
@@ -252,7 +267,7 @@ export default function Sidebar() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     style={{
-                      transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+                      transform: expanded === item.href ? "rotate(90deg)" : "rotate(0deg)",
                       transition: "transform 0.25s ease",
                       opacity: 0.45,
                       flexShrink: 0,
@@ -261,7 +276,7 @@ export default function Sidebar() {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
-                {expanded && (
+                {expanded === item.href && (
                   <div style={{ paddingLeft: 22 }}>
                     {item.children!.map((child) => {
                       const childView = new URLSearchParams(
