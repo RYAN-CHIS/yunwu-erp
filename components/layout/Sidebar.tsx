@@ -131,54 +131,30 @@ export default function Sidebar() {
           boxShadow: "4px 0 32px rgba(0,0,0,0.25)",
         }}
       >
-        {/* Logo */}
-        <div style={{ padding: "32px 20px 24px", borderBottom: `1px solid ${COLORS.border}` }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            {/* Logo Image — 白底墨字，在深色侧边栏上自然显眼 */}
+        {/* Logo — 紧凑布局 */}
+        <div style={{ padding: "22px 18px 16px", borderBottom: `1px solid ${COLORS.border}` }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            {/* Logo Image */}
             <div style={{
-              position: "relative",
-              width: 76,
-              height: 76,
-              borderRadius: 16,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              width: 64, height: 64, borderRadius: 14,
+              display: "flex", alignItems: "center", justifyContent: "center",
               background: "rgba(255,255,255,0.95)",
               border: "1px solid rgba(255,255,255,0.25)",
-              boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.20)",
               overflow: "hidden",
             }}>
-              <img
-                src="/logo.png"
-                alt="允物"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: 15,
-                }}
-              />
+              <img src="/logo.png" alt="允物" style={{
+                width: "100%", height: "100%",
+                objectFit: "cover", borderRadius: 13,
+              }} />
             </div>
-            <div style={{ textAlign: "center" }}>
-              <h1 style={{
-                margin: 0,
-                fontSize: "1.3rem",
-                fontWeight: 700,
-                color: COLORS.text,
-                letterSpacing: "0.15em",
-                fontFamily: "var(--font-serif-zh), serif",
-              }}>
-                允物
-              </h1>
-              <p style={{
-                margin: "4px 0 0 0",
-                fontSize: "0.65rem",
-                color: COLORS.textMuted,
-                letterSpacing: "0.08em",
-              }}>
-                让物归物，让心归心
-              </p>
-            </div>
+            <h1 style={{
+              margin: 0, fontSize: "1.2rem", fontWeight: 700,
+              color: COLORS.text, letterSpacing: "0.15em",
+              fontFamily: "var(--font-serif-zh), serif",
+            }}>
+              允物
+            </h1>
           </div>
         </div>
 
@@ -352,20 +328,18 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer — 用户信息 + 退出 横排 */}
         <div style={{
           borderTop: `1px solid ${COLORS.border}`,
+          padding: "10px 14px 12px",
+          display: "flex", alignItems: "center", gap: 8,
         }}>
-          {/* User Info */}
           {session?.user && (
-            <div style={{
-              padding: "12px 20px 8px",
-              display: "flex", alignItems: "center", gap: 10,
-            }}>
+            <>
+              {/* 头像 */}
               <div style={{
-                width: 32, height: 32, borderRadius: 10,
-                overflow: "hidden",
-                flexShrink: 0,
+                width: 30, height: 30, borderRadius: 9,
+                overflow: "hidden", flexShrink: 0,
                 background: "rgba(255,255,255,0.10)",
                 border: `1px solid ${COLORS.avatarBorder}`,
               }}>
@@ -373,73 +347,63 @@ export default function Sidebar() {
                   <img
                     src={(session.user as any).avatar}
                     alt="头像"
-                    style={{
-                      width: 32, height: 32, objectFit: "cover",
-                    }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
+                    style={{ width: 30, height: 30, objectFit: "cover" }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                 ) : (
                   <div style={{
                     width: "100%", height: "100%",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.8rem", fontWeight: 600,
-                    color: COLORS.text,
+                    fontSize: "0.75rem", fontWeight: 600, color: COLORS.text,
                   }}>
                     {(session.user.name || session.user.email || "A").charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
+              {/* 名字 + 角色 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   margin: 0, fontSize: "0.78rem", fontWeight: 500,
                   color: COLORS.text,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  lineHeight: 1.2,
                 }}>
                   {session.user.name || session.user.email}
                 </p>
-                <p style={{
-                  margin: 0, fontSize: "0.65rem",
-                  color: COLORS.userRoleText,
-                }}>
+                <p style={{ margin: "1px 0 0 0", fontSize: "0.6rem", color: COLORS.userRoleText, lineHeight: 1.2 }}>
                   {(session.user as any).role === "admin" ? "管理员" : "用户"}
                 </p>
               </div>
-            </div>
+            </>
           )}
+          {/* 退出按钮 — 图标紧凑版 */}
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            title="退出登录"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 30, height: 30, borderRadius: 8,
+              background: "transparent", border: "none",
+              cursor: "pointer", flexShrink: 0,
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = COLORS.logoutHoverBg;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <LogOut size={14} style={{ color: COLORS.logoutText }} />
+          </button>
+        </div>
 
-          {/* Logout */}
-          <div style={{ padding: "4px 14px 12px" }}>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                width: "100%", padding: "8px 10px", borderRadius: 8,
-                fontSize: "0.74rem", color: COLORS.logoutText,
-                background: "transparent", border: "none", cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = COLORS.logoutHoverBg;
-                e.currentTarget.style.color = COLORS.logoutHoverText;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = COLORS.logoutText;
-              }}
-            >
-              <LogOut size={13} />
-              退出登录
-            </button>
-          </div>
-
-          <div style={{
-            padding: "0 24px 14px",
-            fontSize: "0.62rem", color: COLORS.copyright, letterSpacing: "0.05em",
-          }}>
-            © 2026  允物品牌
-          </div>
+        <div style={{
+          padding: "0 20px 10px",
+          fontSize: "0.6rem", color: COLORS.copyright, letterSpacing: "0.05em",
+          textAlign: "center",
+        }}>
+          © 2026 允物品牌
         </div>
       </aside>
     </>
