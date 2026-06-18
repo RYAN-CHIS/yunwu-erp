@@ -37,7 +37,7 @@ const COLORS = {
   indicatorGrad:  "linear-gradient(180deg, #fbbf24, #b45309)",
   childActive:    "#FBBF24",
   childActiveBg:  "linear-gradient(135deg, rgba(251,191,36,0.10), rgba(180,83,9,0.04))",
-  logoFilter:     "brightness(0) invert(1)",  // logo 反白
+  logoFilter:     "none",  // 白底墨字logo，自然呈现
   mobileBg:       "#50677D",
   mobileBorder:   "rgba(240,237,232,0.20)",
   logoutText:     "rgba(240,237,232,0.35)",
@@ -134,27 +134,27 @@ export default function Sidebar() {
         {/* Logo */}
         <div style={{ padding: "32px 20px 24px", borderBottom: `1px solid ${COLORS.border}` }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            {/* Logo Image — 反白处理确保清晰 */}
+            {/* Logo Image — 白底墨字，在深色侧边栏上自然显眼 */}
             <div style={{
               position: "relative",
-              width: 72,
-              height: 72,
+              width: 76,
+              height: 76,
               borderRadius: 16,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(255,255,255,0.10)",
-              border: "1px solid rgba(255,255,255,0.18)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.95)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+              overflow: "hidden",
             }}>
               <img
                 src="/logo.png"
                 alt="允物"
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 60,
+                  height: 60,
                   objectFit: "contain",
-                  filter: COLORS.logoFilter,
                 }}
               />
             </div>
