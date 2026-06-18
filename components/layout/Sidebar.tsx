@@ -152,9 +152,10 @@ export default function Sidebar() {
                 src="/logo.png"
                 alt="允物"
                 style={{
-                  width: 60,
-                  height: 60,
-                  objectFit: "contain",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: 15,
                 }}
               />
             </div>
