@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
-          允物 Brand OS
+          让物归物，让心归心
         </h1>
         <p style={{ color: "var(--ink-light)", marginTop: 4 }}>
           东方文化品牌管理系统
