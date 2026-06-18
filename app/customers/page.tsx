@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Phone, Mail, MessageCircle, MapPin } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Phone, Mail, MessageCircle, MapPin, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import { useSort } from "@/hooks/useSort";
 
 interface Customer {
   id: number;
@@ -76,6 +77,9 @@ export default function CustomersPage() {
     fetchData();
   }, [fetchData]);
 
+  // 排序
+  const { sorted: sortedCustomers, sortKey, sortDir, toggleSort } = useSort(customers);
+
   function openCreate() {
     setEditCustomer(null);
     setForm({ name: "", phone: "", email: "", wechat: "", source: "", address: "", notes: "" });
@@ -123,6 +127,36 @@ export default function CustomersPage() {
     } catch (e: any) {
       alert(e.message);
     }
+  }
+
+  // 渲染排序表头
+  function renderSortTh(label: string, key: string, align: "left" | "center" | "right" = "left") {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    
+    const textAlign = align === "center" ? "center" : align === "right" ? "right" : "left";
+    
+    return (
+      <th
+        style={{
+          ...thStyle(align === "left" && key === "code" ? "sticky" : undefined, align === "left" && key === "code" ? 0 : undefined, align),
+          cursor: "pointer",
+          userSelect: "none",
+          color: isActive ? "#b45309" : "#777",
+        }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: textAlign === "right" ? "flex-end" : textAlign === "center" ? "center" : "flex-start", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
   }
 
   return (
@@ -203,24 +237,24 @@ export default function CustomersPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
             <thead>
               <tr style={{ position: "sticky", top: 0, zIndex: 10, background: "#fafaf7" }}>
-                <th style={thStyle("sticky", 0)}>编码</th>
-                <th style={thStyle()}>名称</th>
-                <th style={thStyle()}>联系电话</th>
-                <th style={thStyle()}>微信</th>
-                <th style={thStyle()}>邮箱</th>
-                <th style={thStyle()}>来源</th>
-                <th style={thStyle()}>地址</th>
-                <th style={thStyle()}>订单数</th>
+                {renderSortTh("编码", "code")}
+                {renderSortTh("名称", "name")}
+                {renderSortTh("联系电话", "phone")}
+                {renderSortTh("微信", "wechat")}
+                {renderSortTh("邮箱", "email")}
+                {renderSortTh("来源", "source")}
+                {renderSortTh("地址", "address")}
+                {renderSortTh("订单数", "_count.orders")}
                 <th style={thStyle("", 0, "right")}>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: "#999" }}>加载中…</td></tr>
-              ) : customers.length === 0 ? (
+              ) : sortedCustomers.length === 0 ? (
                 <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: "#999" }}>暂无客户数据</td></tr>
               ) : (
-                customers.map((c) => (
+                sortedCustomers.map((c) => (
                   <tr key={c.id} style={{ borderBottom: "1px solid #f0ede6", transition: "background 0.15s" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#fafaf7")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Plus, ShoppingCart, Download, RefreshCw, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Plus, ShoppingCart, Download, RefreshCw, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import { useSort } from "@/hooks/useSort";
 
 const materialTypeOptions = [
   { value: "BEAD", label: "珠类" },
@@ -194,28 +195,91 @@ export default function MaterialsClient({
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
 
-  const isBeadType = form.materialType === "BEAD";
+  // 排序
+  const { sorted: sortedMaterials, sortKey, sortDir, toggleSort } = useSort(materials);
 
   // 搜索过滤
   const filtered = searchQuery
-    ? materials.filter((m) => {
+    ? sortedMaterials.filter((m) => {
         const q = searchQuery.toLowerCase();
         return m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q);
       })
-    : materials;
+    : sortedMaterials;
+
+  const isBeadType = form.materialType === "BEAD";
 
   // 分页
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // 搜索时重置到第一页
-  function handleSearch(q: string) {
-    setSearchQuery(q);
-    setCurrentPage(1);
+  // 渲染可排序表头
+  function renderSortTh(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-left p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
   }
 
-  // 打开新增材料弹窗
+  function renderSortThRight(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-right p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  function renderSortThCenter(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-center p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
   function openNew() {
     setEditing(null);
     setForm(emptyMaterialForm());
@@ -405,7 +469,7 @@ export default function MaterialsClient({
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
               <input
                 value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜索编码或名称…"
                 className="w-48 pl-9 pr-3 py-2 rounded-lg border text-sm"
                 style={{ borderColor: "var(--border)" }}
@@ -433,20 +497,37 @@ export default function MaterialsClient({
           <table className="w-full text-sm">
             <thead className="relative z-10">
               <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
-                <th className="text-left p-3 whitespace-nowrap sticky left-0 z-20" style={{ background: "rgba(245,240,230,0.95)" }}>编码</th>
-                <th className="text-left p-3">名称</th>
-                <th className="text-left p-3">类型</th>
-                <th className="text-left p-3">分类</th>
-                <th className="text-left p-3">规格</th>
-                <th className="text-left p-3">形状</th>
-                <th className="text-right p-3">颗数/条</th>
-                <th className="text-right p-3">克重/条</th>
+                {/* 编码 - 需要 sticky left-0 */}
+                <th
+                  className="text-left p-3 whitespace-nowrap sticky left-0 z-20 cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+                  style={{ background: "rgba(245,240,230,0.95)", color: sortKey === "code" ? "#b45309" : "var(--ink-light)" }}
+                  onClick={() => toggleSort("code")}
+                  title="按编码排序"
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    编码
+                    <span style={{ display: "inline-flex", alignItems: "center" }}>
+                      {sortKey === "code"
+                        ? sortDir === "asc"
+                          ? <ArrowUp size={12} />
+                          : <ArrowDown size={12} />
+                        : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />}
+                    </span>
+                  </span>
+                </th>
+                {renderSortTh("名称", "name")}
+                {renderSortTh("类型", "materialType")}
+                {renderSortTh("分类", "category")}
+                {renderSortTh("规格", "specification")}
+                {renderSortTh("形状", "shape")}
+                {renderSortThRight("颗数/条", "beadsPerStrand")}
+                {renderSortThRight("克重/条", "weightPerStrand")}
                 <th className="text-right p-3">采购库存</th>
-                <th className="text-right p-3">核算库存</th>
+                {renderSortThRight("核算库存", "remaining")}
                 <th className="text-right p-3">采购单价</th>
-                <th className="text-right p-3">核算单价</th>
+                {renderSortThRight("核算单价", "unitCost")}
                 <th className="text-right p-3">库存总值</th>
-                <th className="text-center p-3">状态</th>
+                {renderSortThCenter("状态", "status")}
                 <th className="text-center p-3">操作</th>
               </tr>
             </thead>

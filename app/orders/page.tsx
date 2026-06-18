@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Eye, X } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Eye, X, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import { useSort } from "@/hooks/useSort";
 
 // ---- 类型定义 ----
 interface OrderItem {
@@ -148,6 +149,9 @@ export default function OrdersPage() {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
+  // 排序
+  const { sorted: sortedOrders, sortKey, sortDir, toggleSort } = useSort(orders);
+
   // 搜索客户
   async function searchCustomers(q: string) {
     setCustomerSearch(q);
@@ -273,6 +277,36 @@ export default function OrdersPage() {
     }
   }
 
+  // 渲染排序表头
+  function renderSortTh(label: string, key: string, align: "left" | "center" | "right" = "left") {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    
+    const textAlign = align === "center" ? "center" : align === "right" ? "right" : "left";
+    
+    return (
+      <th
+        style={{
+          ...th(align === "left" && key === "orderNo" ? "sticky" : undefined, align === "left" && key === "orderNo" ? 0 : undefined, align),
+          cursor: "pointer",
+          userSelect: "none",
+          color: isActive ? "#b45309" : "#777",
+        }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: textAlign === "right" ? "flex-end" : textAlign === "center" ? "center" : "flex-start", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
   return (
     <div style={{ padding: 24, maxWidth: 1700, margin: "0 auto", height: "calc(100vh - 40px)", display: "flex", flexDirection: "column", gap: 16 }}>
       {/* 页面标题 */}
@@ -323,25 +357,25 @@ export default function OrdersPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
             <thead>
               <tr style={{ position: "sticky", top: 0, zIndex: 10, background: "#fafaf7" }}>
-                <th style={th("sticky", 0)}>订单号</th>
-                <th style={th()}>客户</th>
-                <th style={th()}>渠道</th>
-                <th style={th()}>状态</th>
-                <th style={th()}>付款</th>
-                <th style={th()}>商品数</th>
-                <th style={th("", 0, "right")}>总额</th>
-                <th style={th("", 0, "right")}>已付</th>
-                <th style={th()}>日期</th>
-                <th style={th("", 0, "center")}>操作</th>
+                {renderSortTh("订单号", "orderNo")}
+                {renderSortTh("客户", "customer.name")}
+                {renderSortTh("渠道", "channel")}
+                {renderSortTh("状态", "status")}
+                {renderSortTh("付款", "paymentStatus")}
+                {renderSortTh("商品数", "itemCount")}
+                {renderSortTh("总额", "totalAmount", "right")}
+                {renderSortTh("已付", "paidAmount", "right")}
+                {renderSortTh("日期", "orderDate")}
+                <th style={{ ...th("", 0, "center") }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={10} style={{ padding: 40, textAlign: "center", color: "#999" }}>加载中…</td></tr>
-              ) : orders.length === 0 ? (
+              ) : sortedOrders.length === 0 ? (
                 <tr><td colSpan={10} style={{ padding: 40, textAlign: "center", color: "#999" }}>暂无订单数据</td></tr>
               ) : (
-                orders.map((o) => (
+                sortedOrders.map((o) => (
                   <tr key={o.id} style={{ borderBottom: "1px solid #f0ede6", transition: "background 0.15s" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#fafaf7")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}

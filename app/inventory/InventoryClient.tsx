@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Plus, ArrowDown, ArrowUp, RefreshCw, Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ArrowDown, ArrowUp, RefreshCw, Download, Search, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import { useSort } from "@/hooks/useSort";
 
 interface Material {
   id: number;
@@ -84,13 +85,16 @@ export default function InventoryClient({ materials, transactions }: { materials
   const metalTotalValue = metalMaterials.reduce((sum, m) => sum + (m.unitCost ?? 0) * m.remaining, 0);
   const allTotalValue = beadTotalValue + metalTotalValue;
 
-  // 库存概览搜索过滤
+  // 库存概览排序
+  const { sorted: sortedMaterials, sortKey: materialsSortKey, sortDir: materialsSortDir, toggleSort: toggleMaterialsSort } = useSort(materials);
+
+  // 库存概览搜索过滤（在排序后过滤）
   const filteredMaterials = searchQuery
-    ? materials.filter((m) => {
+    ? sortedMaterials.filter((m) => {
         const q = searchQuery.toLowerCase();
         return m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q);
       })
-    : materials;
+    : sortedMaterials;
   const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginatedMaterials = filteredMaterials.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -98,18 +102,137 @@ export default function InventoryClient({ materials, transactions }: { materials
   // 库存流水搜索过滤 & 分页
   const [txnSearchQuery, setTxnSearchQuery] = useState("");
   const [txnPage, setTxnPage] = useState(1);
+  
+  // 库存流水排序
+  const { sorted: sortedTxns, sortKey: txnSortKey, sortDir: txnSortDir, toggleSort: toggleTxnSort } = useSort(transactions);
+  
   const filteredTxns = txnSearchQuery
-    ? transactions.filter((t) => {
+    ? sortedTxns.filter((t) => {
         const q = txnSearchQuery.toLowerCase();
         return t.material?.code.toLowerCase().includes(q) || t.material?.name.toLowerCase().includes(q) || (t.remark || "").toLowerCase().includes(q);
       })
-    : transactions;
+    : sortedTxns;
   const txnTotalPages = Math.max(1, Math.ceil(filteredTxns.length / PAGE_SIZE));
   const safeTxnPage = Math.min(txnPage, txnTotalPages);
   const paginatedTxns = filteredTxns.slice((safeTxnPage - 1) * PAGE_SIZE, safeTxnPage * PAGE_SIZE);
 
   function handleSearch(q: string) { setSearchQuery(q); setCurrentPage(1); }
   function handleTxnSearch(q: string) { setTxnSearchQuery(q); setTxnPage(1); }
+
+  // 渲染库存概览排序表头（左对齐）
+  function renderMaterialsSortTh(label: string, key: string) {
+    const isActive = materialsSortKey === key;
+    const icon = isActive
+      ? materialsSortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-left p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleMaterialsSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染库存概览排序表头（右对齐）
+  function renderMaterialsSortThRight(label: string, key: string) {
+    const isActive = materialsSortKey === key;
+    const icon = isActive
+      ? materialsSortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-right p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleMaterialsSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染库存流水排序表头（左对齐）
+  function renderTxnSortTh(label: string, key: string) {
+    const isActive = txnSortKey === key;
+    const icon = isActive
+      ? txnSortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-left p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleTxnSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染库存流水排序表头（右对齐）
+  function renderTxnSortThRight(label: string, key: string) {
+    const isActive = txnSortKey === key;
+    const icon = isActive
+      ? txnSortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-right p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleTxnSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染库存流水排序表头（居中）
+  function renderTxnSortThCenter(label: string, key: string) {
+    const isActive = txnSortKey === key;
+    const icon = isActive
+      ? txnSortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-center p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleTxnSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
 
   function openNew() {
     setForm({ materialId: materials[0]?.id ?? 0, type: "OUT", quantity: 0, remark: "" });
@@ -230,16 +353,33 @@ export default function InventoryClient({ materials, transactions }: { materials
           <table className="w-full text-sm">
             <thead className="relative z-10">
               <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
-                <th className="text-left p-3 whitespace-nowrap sticky left-0 z-20" style={{ background: "rgba(245,240,230,0.95)" }}>编号</th>
-                <th className="text-left p-3">名称</th>
-                <th className="text-left p-3">规格</th>
-                <th className="text-left p-3">形状</th>
-                <th className="text-right p-3">颗数/条</th>
-                <th className="text-right p-3">克重/条</th>
+                {/* 编号 - 需要 sticky left-0 */}
+                <th
+                  className="text-left p-3 whitespace-nowrap sticky left-0 z-20 cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+                  style={{ background: "rgba(245,240,230,0.95)", color: materialsSortKey === "code" ? "#b45309" : "var(--ink-light)" }}
+                  onClick={() => toggleMaterialsSort("code")}
+                  title="按编号排序"
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    编号
+                    <span style={{ display: "inline-flex", alignItems: "center" }}>
+                      {materialsSortKey === "code"
+                        ? materialsSortDir === "asc"
+                          ? <ArrowUp size={12} />
+                          : <ArrowDown size={12} />
+                        : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />}
+                    </span>
+                  </span>
+                </th>
+                {renderMaterialsSortTh("名称", "name")}
+                {renderMaterialsSortTh("规格", "specification")}
+                {renderMaterialsSortTh("形状", "shape")}
+                {renderMaterialsSortThRight("颗数/条", "beadsPerStrand")}
+                {renderMaterialsSortThRight("克重/条", "weightPerStrand")}
                 <th className="text-right p-3">采购库存</th>
-                <th className="text-right p-3">核算库存</th>
+                {renderMaterialsSortThRight("核算库存", "remaining")}
                 <th className="text-right p-3">采购单价</th>
-                <th className="text-right p-3">核算单价</th>
+                {renderMaterialsSortThRight("核算单价", "unitCost")}
                 <th className="text-right p-3">库存总值</th>
                 <th className="text-center p-3">状态</th>
               </tr>
@@ -328,13 +468,30 @@ export default function InventoryClient({ materials, transactions }: { materials
           <table className="w-full text-sm">
             <thead className="relative z-10">
               <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
-                <th className="text-left p-3 whitespace-nowrap sticky left-0 z-20" style={{ background: "rgba(245,240,230,0.95)" }}>时间</th>
-                <th className="text-left p-3">材料</th>
-                <th className="text-center p-3">类型</th>
-                <th className="text-right p-3">变动量</th>
-                <th className="text-right p-3">变动前</th>
-                <th className="text-right p-3">变动后</th>
-                <th className="text-left p-3">备注</th>
+                {/* 时间 - 需要 sticky left-0 */}
+                <th
+                  className="text-left p-3 whitespace-nowrap sticky left-0 z-20 cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+                  style={{ background: "rgba(245,240,230,0.95)", color: txnSortKey === "createdAt" ? "#b45309" : "var(--ink-light)" }}
+                  onClick={() => toggleTxnSort("createdAt")}
+                  title="按时间排序"
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    时间
+                    <span style={{ display: "inline-flex", alignItems: "center" }}>
+                      {txnSortKey === "createdAt"
+                        ? txnSortDir === "asc"
+                          ? <ArrowUp size={12} />
+                          : <ArrowDown size={12} />
+                        : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />}
+                    </span>
+                  </span>
+                </th>
+                {renderTxnSortTh("材料", "material.code")}
+                {renderTxnSortThCenter("类型", "type")}
+                {renderTxnSortThRight("变动量", "quantity")}
+                {renderTxnSortThRight("变动前", "beforeQty")}
+                {renderTxnSortThRight("变动后", "afterQty")}
+                {renderTxnSortTh("备注", "remark")}
               </tr>
             </thead>
             <tbody>

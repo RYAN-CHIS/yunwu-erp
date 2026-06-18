@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { TrendingUp, TrendingDown, Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Download, Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { useSort } from "@/hooks/useSort";
 
 interface Cost {
   skuId: number;
@@ -32,13 +33,16 @@ export default function CostsClient({ list }: { list: Cost[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
 
+  // 排序
+  const { sorted: sortedList, sortKey, sortDir, toggleSort } = useSort(list);
+
   const filtered = searchQuery
-    ? list.filter((r) => {
+    ? sortedList.filter((r) => {
         const q = searchQuery.toLowerCase();
         return r.skuCode.toLowerCase().includes(q) || r.skuName.toLowerCase().includes(q)
           || r.productName.toLowerCase().includes(q) || r.seriesName.toLowerCase().includes(q);
       })
-    : list;
+    : sortedList;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -46,6 +50,75 @@ export default function CostsClient({ list }: { list: Cost[] }) {
   function handleSearch(q: string) { setSearchQuery(q); setCurrentPage(1); }
 
   function handleExport() { window.open("/api/export?type=costs", "_blank"); }
+
+  // 渲染排序表头（左对齐）
+  function renderSortTh(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-left p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染排序表头（右对齐）
+  function renderSortThRight(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-right p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染排序表头（居中）
+  function renderSortThCenter(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-center p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
 
   // 汇总统计（使用过滤后数据）
   const totalMaterialCost = filtered.reduce((s, r) => s + r.materialCost, 0);
@@ -126,16 +199,33 @@ export default function CostsClient({ list }: { list: Cost[] }) {
         <table className="w-full text-sm">
           <thead className="relative z-10">
             <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
-              <th className="text-left p-3 whitespace-nowrap sticky left-0 z-20" style={{ background: "rgba(245,240,230,0.95)" }}>SKU</th>
-              <th className="text-left p-3">系列·作品</th>
-              <th className="text-left p-3">状态</th>
-              <th className="text-right p-3">材料成本</th>
-              <th className="text-right p-3">人工成本</th>
-              <th className="text-right p-3">总成本</th>
-              <th className="text-right p-3">售价</th>
-              <th className="text-right p-3">单件毛利</th>
-              <th className="text-right p-3">毛利率</th>
-              <th className="text-right p-3">库存</th>
+              {/* SKU - 需要 sticky left-0 */}
+              <th
+                className="text-left p-3 whitespace-nowrap sticky left-0 z-20 cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+                style={{ background: "rgba(245,240,230,0.95)", color: sortKey === "skuCode" ? "#b45309" : "var(--ink-light)" }}
+                onClick={() => toggleSort("skuCode")}
+                title="按SKU编码排序"
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  SKU
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    {sortKey === "skuCode"
+                      ? sortDir === "asc"
+                        ? <ArrowUp size={12} />
+                        : <ArrowDown size={12} />
+                      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />}
+                  </span>
+                </span>
+              </th>
+              {renderSortTh("系列·作品", "seriesName")}
+              {renderSortTh("状态", "status")}
+              {renderSortThRight("材料成本", "materialCost")}
+              {renderSortThRight("人工成本", "laborCost")}
+              {renderSortThRight("总成本", "totalCost")}
+              {renderSortThRight("售价", "price")}
+              {renderSortThRight("单件毛利", "grossProfit")}
+              {renderSortThRight("毛利率", "grossMargin")}
+              {renderSortThRight("库存", "finishedStock")}
             </tr>
           </thead>
           <tbody>

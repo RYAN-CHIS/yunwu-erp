@@ -16,6 +16,9 @@ import {
   User,
   Image,
   Lock,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   ALL_PERMISSIONS,
@@ -24,6 +27,7 @@ import {
   getUserPermissions,
   type UserPermissions,
 } from "@/lib/permissions";
+import { useSort } from "@/hooks/useSort";
 
 interface UserData {
   id: number;
@@ -116,6 +120,9 @@ export default function SettingsPage() {
       loadUsers();
     }
   }, [isAdmin, activeTab, loadUsers]);
+
+  // 用户排序
+  const { sorted: sortedUsers, sortKey, sortDir, toggleSort } = useSort(users);
 
   // 选中权限管理目标用户
   const selectPermissionUser = (user: UserData) => {
@@ -319,6 +326,34 @@ export default function SettingsPage() {
       showMessage("error", "删除失败");
     }
   };
+
+  // 渲染排序表头
+  function renderSortTh(label: string, key: string, className = "text-left") {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    
+    const isRight = className.includes("text-right");
+    const isCenter = className.includes("text-center");
+    const justify = isRight ? "flex-end" : isCenter ? "center" : "flex-start";
+    
+    return (
+      <th
+        className={`p-3 font-medium cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)] ${className}`}
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: justify, width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
 
   const tabs = [
     { id: "profile", label: "个人资料", icon: User },
@@ -713,22 +748,16 @@ export default function SettingsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: "#faf8f5", borderBottom: "1px solid var(--border)" }}>
-                      <th className="text-left p-3 font-medium" style={{ color: "var(--ink-light)" }}>
-                        用户
-                      </th>
-                      <th className="text-left p-3 font-medium" style={{ color: "var(--ink-light)" }}>
-                        角色
-                      </th>
-                      <th className="text-left p-3 font-medium" style={{ color: "var(--ink-light)" }}>
-                        创建时间
-                      </th>
+                      {renderSortTh("用户", "name", "text-left")}
+                      {renderSortTh("角色", "role", "text-left")}
+                      {renderSortTh("创建时间", "createdAt", "text-left")}
                       <th className="text-right p-3 font-medium" style={{ color: "var(--ink-light)" }}>
                         操作
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((user) => (
+                    {sortedUsers.map((user) => (
                       <tr
                         key={user.id}
                         style={{ borderBottom: "1px solid #f0ebe0" }}
@@ -822,7 +851,7 @@ export default function SettingsPage() {
                         </td>
                       </tr>
                     ))}
-                    {users.length === 0 && (
+                    {sortedUsers.length === 0 && (
                       <tr>
                         <td colSpan={4} className="text-center py-8 text-sm" style={{ color: "var(--ink-light)" }}>
                           暂无用户数据

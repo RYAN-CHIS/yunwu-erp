@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import { useSort } from "@/hooks/useSort";
 
 interface BomItem {
   id: number;
@@ -42,7 +43,56 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
 
+  // 排序
+  const { sorted: sortedRows, sortKey, sortDir, toggleSort } = useSort(rows);
+
   function handleSearch(q: string) { setSearchQuery(q); setCurrentPage(1); }
+
+  // 渲染排序表头（左对齐）
+  function renderSortTh(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-left p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
+
+  // 渲染排序表头（右对齐）
+  function renderSortThRight(label: string, key: string) {
+    const isActive = sortKey === key;
+    const icon = isActive
+      ? sortDir === "asc"
+        ? <ArrowUp size={12} />
+        : <ArrowDown size={12} />
+      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
+    return (
+      <th
+        className="text-right p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
+        onClick={() => toggleSort(key)}
+        title={`按${label}排序`}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end", width: "100%" }}>
+          {label}
+          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
+        </span>
+      </th>
+    );
+  }
 
   function openNew() {
     setEditing(null);
@@ -75,9 +125,9 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
     location.reload();
   }
 
-  // 搜索过滤
+  // 搜索过滤（在排序后过滤）
   const filteredList = searchQuery
-    ? rows.filter((r) => {
+    ? sortedRows.filter((r) => {
         const q = searchQuery.toLowerCase();
         return (r.sku?.code ?? "").toLowerCase().includes(q)
           || (r.sku?.name ?? "").toLowerCase().includes(q)
@@ -85,7 +135,7 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
           || r.materialCodeSnapshot.toLowerCase().includes(q)
           || r.materialNameSnapshot.toLowerCase().includes(q);
       })
-    : rows;
+    : sortedRows;
 
   // 按SKU分组
   const grouped: Record<number, { skuCode: string; skuName: string; productName: string; items: BomItem[]; totalCost: number }> = {};
@@ -151,11 +201,11 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
           <table className="w-full text-sm">
             <thead>
               <tr style={{ color: "var(--ink-light)" }}>
-                <th className="text-left p-3">材料编号</th>
-                <th className="text-left p-3">材料名称</th>
-                <th className="text-right p-3">用量</th>
-                <th className="text-right p-3">单位成本</th>
-                <th className="text-right p-3">行成本</th>
+                {renderSortTh("材料编号", "materialCodeSnapshot")}
+                {renderSortTh("材料名称", "materialNameSnapshot")}
+                {renderSortThRight("用量", "quantity")}
+                {renderSortThRight("单位成本", "unitPrice")}
+                {renderSortThRight("行成本", "lineCost")}
                 <th className="text-center p-3">操作</th>
               </tr>
             </thead>
