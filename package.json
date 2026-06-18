@@ -9,8 +9,14 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run lint && npm run typecheck && npm run build",
+    "db:push": "prisma db push",
+    "db:push:staging": "DATABASE_URL=\"postgresql://neondb_owner:npg_cAas8kuHmrO0@ep-divine-sun-ajtlfa39.c-3.us-east-2.aws.neon.tech/neondb?sslmode=require\" prisma db push",
+    "db:push:prod": "DATABASE_URL=\"postgresql://neondb_owner:npg_cAas8kuHmrO0@ep-polished-unit-ajk5rq34.c-3.us-east-2.aws.neon.tech/neondb?sslmode=require\" prisma db push",
     "seed": "npx tsx prisma/seed.ts",
-    "seed-admin": "npx tsx scripts/seed-admin.ts"
+    "seed-admin": "npx tsx scripts/seed-admin.ts",
+    "ci": "npm ci && npm run validate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
