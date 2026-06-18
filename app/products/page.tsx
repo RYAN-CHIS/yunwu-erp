@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import ProductsClient from "./ProductsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductsPage() {
   const [products, series, works] = await Promise.all([
     prisma.products.findMany({ include:{ skus:true, work:{ include:{ series:true } } }, orderBy:{ createdAt:"desc" } }),

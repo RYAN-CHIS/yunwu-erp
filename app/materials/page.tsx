@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import MaterialsClient from "./MaterialsClient";
 
+export const dynamic = 'force-dynamic';
+
 // view → API 过滤参数映射
 const VIEW_FILTER: Record<string, { materialType?: string; category?: string }> = {
   bead: { materialType: "BEAD" },

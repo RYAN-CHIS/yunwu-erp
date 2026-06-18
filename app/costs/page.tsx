@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import CostsClient from "./CostsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CostsPage() {
   const skus = await prisma.productSku.findMany({
     orderBy: { updatedAt: "desc" },
