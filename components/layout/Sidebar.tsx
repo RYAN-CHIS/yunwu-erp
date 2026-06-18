@@ -26,29 +26,29 @@ import { cn } from "@/lib/utils";
 // 东方美学深色调色板 — 以 #50677D 为基调
 const COLORS = {
   bgGradient:     "linear-gradient(175deg, #3D5265 0%, #50677D 40%, #445B6F 100%)",
-  text:           "#F0EDE8",
-  textMuted:      "rgba(240,237,232,0.45)",
-  textDim:        "rgba(240,237,232,0.28)",
-  border:         "rgba(240,237,232,0.10)",
-  hoverBg:        "rgba(240,237,232,0.07)",
-  activeBg:       "linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04))",
-  activeBorder:   "rgba(251,191,36,0.25)",
+  text:           "#F5F2EE",
+  textMuted:      "rgba(245,242,238,0.78)",
+  textDim:        "rgba(245,242,238,0.55)",
+  border:         "rgba(245,242,238,0.12)",
+  hoverBg:        "rgba(245,242,238,0.10)",
+  activeBg:       "linear-gradient(135deg, rgba(251,191,36,0.14), rgba(251,191,36,0.05))",
+  activeBorder:   "rgba(251,191,36,0.30)",
   activeText:     "#FBBF24",
   indicatorGrad:  "linear-gradient(180deg, #fbbf24, #b45309)",
   childActive:    "#FBBF24",
-  childActiveBg:  "linear-gradient(135deg, rgba(251,191,36,0.10), rgba(180,83,9,0.04))",
-  logoFilter:     "none",  // 白底墨字logo，自然呈现
+  childActiveBg:  "linear-gradient(135deg, rgba(251,191,36,0.12), rgba(180,83,9,0.05))",
+  logoFilter:     "none",
   mobileBg:       "#50677D",
-  mobileBorder:   "rgba(240,237,232,0.20)",
-  logoutText:     "rgba(240,237,232,0.35)",
-  logoutHoverBg:  "rgba(220,38,38,0.15)",
-  logoutHoverText:"rgba(248,113,113,0.9)",
-  copyright:      "rgba(240,237,232,0.20)",
-  avatarBorder:   "rgba(251,191,36,0.20)",
-  userRoleText:   "rgba(240,237,232,0.40)",
-  submenuText:    "rgba(240,237,232,0.50)",
-  submenuHover:   "rgba(240,237,232,0.75)",
-  expandArrow:    "rgba(240,237,232,0.40)",
+  mobileBorder:   "rgba(245,242,238,0.25)",
+  logoutText:     "rgba(245,242,238,0.65)",
+  logoutHoverBg:  "rgba(220,38,38,0.18)",
+  logoutHoverText:"rgba(248,113,113,0.95)",
+  copyright:      "rgba(245,242,238,0.42)",
+  avatarBorder:   "rgba(251,191,36,0.22)",
+  userRoleText:   "rgba(245,242,238,0.68)",
+  submenuText:    "rgba(245,242,238,0.72)",
+  submenuHover:   "rgba(245,242,238,0.92)",
+  expandArrow:    "rgba(245,242,238,0.62)",
 } as const;
 
 const navItems = [
@@ -231,7 +231,7 @@ export default function Sidebar() {
                       boxShadow: "0 0 8px rgba(251,191,36,0.4)",
                     }} />
                   )}
-                  <item.icon size={17} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.5 }} />
+                  <item.icon size={17} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.75 }} />
                   {item.label}
                 </Link>
               );
@@ -278,7 +278,7 @@ export default function Sidebar() {
                       boxShadow: "0 0 8px rgba(251,191,36,0.4)",
                     }} />
                   )}
-                  <item.icon size={17} style={{ flexShrink: 0, opacity: isParentActive ? 1 : 0.5 }} />
+                  <item.icon size={17} style={{ flexShrink: 0, opacity: isParentActive ? 1 : 0.75 }} />
                   <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
                   <svg
                     width="12"
