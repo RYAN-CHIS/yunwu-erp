@@ -92,8 +92,8 @@ export default function ProductsClient({ products: init, series, works }: { prod
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
+      <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>七序作品库</h1>
         <div className="flex items-center gap-2">
             <div className="relative">
@@ -114,7 +114,7 @@ export default function ProductsClient({ products: init, series, works }: { prod
           </button>
         </div>
       </div>
-      <div className="grid gap-4">
+      <div className="flex-1 min-h-0 overflow-auto grid gap-4 content-start">
         {rows.map((p) => {
           const st = statusMap[p.status] ?? { label: p.status, color: "#78716c" };
           return (

@@ -395,8 +395,8 @@ export default function MaterialsClient({
   }
 
   return (
-    <div className="space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
+        <div className="flex items-center justify-between shrink-0">
           <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
             {CATEGORY_VIEWS.find((v) => v.key === activeView)?.label || "原材料库"}
           </h1>
@@ -428,8 +428,8 @@ export default function MaterialsClient({
         </div>
 
         {/* 表格 */}
-        <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] overflow-hidden">
-          <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
+        <div className="flex-1 min-h-0 bg-[var(--paper)] rounded-xl border border-[var(--border)] flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-auto">
           <table className="w-full text-sm">
             <thead className="relative z-10">
               <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>

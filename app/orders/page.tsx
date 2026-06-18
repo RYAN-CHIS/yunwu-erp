@@ -274,9 +274,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1700, margin: "0 auto" }}>
+    <div style={{ padding: 24, maxWidth: 1700, margin: "0 auto", height: "calc(100vh - 40px)", display: "flex", flexDirection: "column", gap: 16 }}>
       {/* 页面标题 */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 700, color: "#1a1714" }}>订单管理</h2>
           <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "#888" }}>共 {total} 个订单</p>
@@ -287,7 +287,7 @@ export default function OrdersPage() {
       </div>
 
       {/* 筛选栏 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#999" }} />
@@ -318,8 +318,8 @@ export default function OrdersPage() {
       </div>
 
       {/* 表格 */}
-      <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden" }}>
-        <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 240px)", overflowY: "auto" }}>
+      <div style={{ flex: 1, minHeight: 0, background: "#fff", borderRadius: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, overflow: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
             <thead>
               <tr style={{ position: "sticky", top: 0, zIndex: 10, background: "#fafaf7" }}>

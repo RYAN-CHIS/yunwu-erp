@@ -129,8 +129,8 @@ export default function InventoryClient({ materials, transactions }: { materials
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
+      <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>库存中心</h1>
         <div className="flex items-center gap-2">
             <div className="relative">
@@ -152,11 +152,12 @@ export default function InventoryClient({ materials, transactions }: { materials
         </div>
       </div>
 
-      {/* 库存概览 */}
-      <div>
-        <h2 className="text-sm font-medium mb-3" style={{ color: "var(--ink-light)" }}>材料库存</h2>
-        <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] overflow-hidden">
-          <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)" }}>
+      <div className="flex-1 min-h-0 flex flex-col gap-4">
+        {/* 库存概览 */}
+        <div className="flex-1 min-h-0 flex flex-col gap-2">
+          <h2 className="text-sm font-medium shrink-0" style={{ color: "var(--ink-light)" }}>材料库存</h2>
+          <div className="flex-1 min-h-0 bg-[var(--paper)] rounded-xl border border-[var(--border)] flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-auto">
           <table className="w-full text-sm">
             <thead className="relative z-10">
               <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
@@ -236,12 +237,12 @@ export default function InventoryClient({ materials, transactions }: { materials
             </div>
           )}
         </div>
-      </div>
+        </div>
 
-      {/* 库存事务流水 */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium" style={{ color: "var(--ink-light)" }}>库存流水</h2>
+        {/* 库存事务流水 */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex items-center justify-between mb-2 shrink-0">
+            <h2 className="text-sm font-medium" style={{ color: "var(--ink-light)" }}>库存流水</h2>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
             <input
@@ -253,8 +254,8 @@ export default function InventoryClient({ materials, transactions }: { materials
             />
           </div>
         </div>
-        <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] overflow-hidden">
-          <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 380px)" }}>
+        <div className="flex-1 min-h-0 bg-[var(--paper)] rounded-xl border border-[var(--border)] flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-auto">
           <table className="w-full text-sm">
             <thead className="relative z-10">
               <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
@@ -318,6 +319,7 @@ export default function InventoryClient({ materials, transactions }: { materials
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* 库存操作弹窗 */}

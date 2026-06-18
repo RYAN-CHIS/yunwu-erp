@@ -110,8 +110,8 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
   const paginatedGroups = groupEntries.slice((safeGroupPage - 1) * PAGE_SIZE, safeGroupPage * PAGE_SIZE);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
+      <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>作品 BOM 库</h1>
         <div className="flex items-center gap-2">
             <div className="relative">
@@ -133,6 +133,7 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
         </div>
       </div>
 
+      <div className="flex-1 min-h-0 overflow-auto">
       {paginatedGroups.map(([skuId, group]) => (
         <div key={skuId} className="bg-[var(--paper)] rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(245,240,230,0.6)" }}>
@@ -204,6 +205,7 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
           </div>
         </div>
       )}
+      </div>
 
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? "编辑BOM" : "新增BOM"}>
         <form onSubmit={save} className="space-y-4">
