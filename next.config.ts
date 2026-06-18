@@ -1,8 +1,5 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  // Increase body size limit for Excel uploads
-  serverExternalPackages: ["better-sqlite3"],
-};
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -33,28 +33,6 @@ enum TransactionType {
   IN
   OUT
   ADJUST
-}
-
-enum OrderChannel {
-  MINIPROGRAM  // 小程序
-  WEBSITE      // 独立站
-  MANUAL       // 手动录入
-}
-
-enum OrderStatus {
-  PENDING       // 待确认
-  CONFIRMED     // 已确认
-  PROCESSING    // 生产中
-  SHIPPED       // 已发货
-  COMPLETED     // 已完成
-  CANCELLED     // 已取消
-}
-
-enum PaymentStatus {
-  UNPAID       // 未付款
-  PARTIAL      // 部分付款
-  PAID         // 已付款
-  REFUNDED     // 已退款
 }
 
 /// ========== 用户认证系统 ==========
@@ -260,17 +238,39 @@ model Bom {
 
 /// ========== 客户与订单管理 ==========
 
+enum OrderChannel {
+  MINIPROGRAM
+  WEBSITE
+  MANUAL
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
 model Customer {
   id          Int       @id @default(autoincrement())
-  code        String    @unique   // 客户编码 C001, C002 ...
-  name        String              // 客户名称
-  phone       String?             // 电话
-  email       String?             // 邮箱
-  wechat      String?   @map("wechat")  // 微信号
-  source      OrderChannel?       // 来源渠道（小程序/独立站/手动录入）
-  address     String?             // 地址
-  tags        String?             // 标签 JSON 数组
-  notes       String?             // 备注
+  code        String    @unique
+  name        String
+  phone       String?
+  email       String?
+  wechat      String?   @map("wechat")
+  source      OrderChannel?
+  address     String?
+  tags        String?
+  notes       String?
   orders      Order[]
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -279,26 +279,26 @@ model Customer {
 
 model Order {
   id            Int            @id @default(autoincrement())
-  orderNo       String         @unique  @map("order_no")  // YW-20260618-0001
+  orderNo       String         @unique  @map("order_no")
   customerId    Int            @map("customer_id")
   customer      Customer       @relation(fields: [customerId], references: [id])
   channel       OrderChannel   @default(MANUAL)
   status        OrderStatus    @default(PENDING)
   paymentStatus PaymentStatus  @default(UNPAID) @map("payment_status")
 
-  items         String                    // JSON: [{skuCode, skuName, qty, unitPrice, lineTotal}]
-  subtotal      Float          @default(0)  // 小计
-  discount      Float          @default(0)  // 折扣金额
-  totalAmount    Float          @default(0)  @map("total_amount") // 订单总额
-  paidAmount     Float          @default(0)  @map("paid_amount")  // 已付金额
-  shippingFee    Float          @default(0)  @map("shipping_fee") // 运费
+  items         String
+  subtotal      Float          @default(0)
+  discount      Float          @default(0)
+  totalAmount    Float          @default(0)  @map("total_amount")
+  paidAmount     Float          @default(0)  @map("paid_amount")
+  shippingFee    Float          @default(0)  @map("shipping_fee")
 
-  platformOrderNo String?      @map("platform_order_no") // 小程序/独立站订单号
-  shippingAddress String?      @map("shipping_address")  // 收货地址 JSON
-  deliveryDate    DateTime?    @map("delivery_date")     // 发货日期
-  notes           String?                                // 备注
+  platformOrderNo String?      @map("platform_order_no")
+  shippingAddress String?      @map("shipping_address")
+  deliveryDate    DateTime?    @map("delivery_date")
+  notes           String?
 
-  createdBy       Int?         @map("created_by")        // 创建人 user id
+  createdBy       Int?         @map("created_by")
   orderDate       DateTime     @default(now()) @map("order_date")
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
