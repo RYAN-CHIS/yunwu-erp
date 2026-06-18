@@ -75,6 +75,15 @@ export default function InventoryClient({ materials, transactions }: { materials
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
 
+  // ── 分类汇总统计 ──
+  const beadMaterials = materials.filter((m) => m.materialType === "BEAD");
+  const metalMaterials = materials.filter((m) => m.materialType === "METAL");
+  const beadTotalCount = beadMaterials.reduce((sum, m) => sum + m.remaining, 0);
+  const metalTotalCount = metalMaterials.reduce((sum, m) => sum + m.remaining, 0);
+  const beadTotalValue = beadMaterials.reduce((sum, m) => sum + (m.unitCost ?? 0) * m.remaining, 0);
+  const metalTotalValue = metalMaterials.reduce((sum, m) => sum + (m.unitCost ?? 0) * m.remaining, 0);
+  const allTotalValue = beadTotalValue + metalTotalValue;
+
   // 库存概览搜索过滤
   const filteredMaterials = searchQuery
     ? materials.filter((m) => {
@@ -153,6 +162,66 @@ export default function InventoryClient({ materials, transactions }: { materials
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col gap-4">
+        {/* 分类汇总卡片 */}
+        <div className="grid grid-cols-3 gap-3 shrink-0">
+          {/* 珠子系统 */}
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--paper)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium" style={{ color: "var(--ink-light)" }}>珠子系统</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(180,83,9,0.08)", color: "#b45309" }}>
+                {beadMaterials.length} 种
+              </span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold font-mono" style={{ color: "var(--ink)" }}>
+                {beadTotalCount.toLocaleString()}
+              </span>
+              <span className="text-sm" style={{ color: "var(--ink-light)" }}>颗</span>
+            </div>
+            <div className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
+              库存总值 <span style={{ color: "#b45309", fontWeight: 600 }}>¥{beadTotalValue.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* 配件系统 */}
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--paper)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium" style={{ color: "var(--ink-light)" }}>配件系统</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(100,116,139,0.08)", color: "#64748b" }}>
+                {metalMaterials.length} 种
+              </span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold font-mono" style={{ color: "var(--ink)" }}>
+                {metalTotalCount.toLocaleString()}
+              </span>
+              <span className="text-sm" style={{ color: "var(--ink-light)" }}>个</span>
+            </div>
+            <div className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
+              库存总值 <span style={{ color: "#64748b", fontWeight: 600 }}>¥{metalTotalValue.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* 总计 */}
+          <div className="rounded-xl border p-4" style={{ borderColor: "rgba(180,83,9,0.15)", background: "linear-gradient(135deg, rgba(180,83,9,0.04), rgba(251,191,36,0.02))" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium" style={{ color: "var(--ink-light)" }}>合计</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(180,83,9,0.12)", color: "#b45309" }}>
+                {materials.length} 种
+              </span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold font-mono" style={{ color: "#b45309" }}>
+                ¥{allTotalValue.toFixed(0)}
+              </span>
+              <span className="text-sm" style={{ color: "var(--ink-light)" }}>库存总值</span>
+            </div>
+            <div className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
+              珠子 {beadTotalCount.toLocaleString()} 颗 + 配件 {metalTotalCount.toLocaleString()} 个
+            </div>
+          </div>
+        </div>
+
         {/* 库存概览 */}
         <div className="flex-1 min-h-0 flex flex-col gap-2">
           <h2 className="text-sm font-medium shrink-0" style={{ color: "var(--ink-light)" }}>材料库存</h2>
