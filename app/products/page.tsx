@@ -1,0 +1,11 @@
+import { prisma } from "@/lib/prisma";
+import ProductsClient from "./ProductsClient";
+
+export default async function ProductsPage() {
+  const [products, series, works] = await Promise.all([
+    prisma.products.findMany({ include:{ skus:true, work:{ include:{ series:true } } }, orderBy:{ createdAt:"desc" } }),
+    prisma.series.findMany({ orderBy:{ sortOrder:"asc" } }),
+    prisma.works.findMany({ include:{ products:true }, orderBy:{ createdAt:"desc" } }),
+  ]);
+  return <ProductsClient products={products} series={series} works={works} />;
+}
