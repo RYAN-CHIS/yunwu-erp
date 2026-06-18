@@ -79,7 +79,7 @@ export default function Sidebar() {
       {/* Mobile toggle */}
       <button
         className="fixed top-4 left-4 z-50 lg:hidden flex items-center justify-center w-9 h-9 rounded-lg shadow-md"
-        style={{ background: "#0d0c0b", color: "#f6f1eb", border: "1px solid rgba(246,241,235,0.15)" }}
+        style={{ background: "#EDE6DA", color: "#3D3226", border: "1px solid rgba(61,50,38,0.15)" }}
         onClick={() => setOpen(!open)}
       >
         {open ? <X size={18} /> : <Menu size={18} />}
@@ -99,12 +99,12 @@ export default function Sidebar() {
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
         style={{
-          background: "linear-gradient(175deg, #0d0c0b 0%, #1a1714 50%, #0f0e0d 100%)",
-          boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
+          background: "linear-gradient(175deg, #F7F3EC 0%, #EDE6DA 50%, #F7F3EC 100%)",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.06)",
         }}
       >
         {/* Logo */}
-        <div style={{ padding: "32px 20px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "32px 20px 24px", borderBottom: "1px solid rgba(61,50,38,0.08)" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
             {/* Logo Image - 白色/卡其色滤镜 */}
             <div style={{
@@ -115,9 +115,9 @@ export default function Sidebar() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "linear-gradient(135deg, rgba(180,83,9,0.15), rgba(180,83,9,0.05))",
-              border: "1px solid rgba(246,241,235,0.12)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+              background: "linear-gradient(135deg, rgba(180,83,9,0.12), rgba(180,83,9,0.04))",
+              border: "1px solid rgba(180,83,9,0.15)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4)",
             }}>
               <img
                 src="/logo.png"
@@ -126,7 +126,7 @@ export default function Sidebar() {
                   width: 56,
                   height: 56,
                   objectFit: "contain",
-                  filter: "invert(1) brightness(1.1)",
+                  filter: "brightness(0.4)",
                 }}
               />
             </div>
@@ -135,17 +135,16 @@ export default function Sidebar() {
                 margin: 0,
                 fontSize: "1.3rem",
                 fontWeight: 700,
-                color: "#f6f1eb",
+                color: "#3D3226",
                 letterSpacing: "0.15em",
                 fontFamily: "var(--font-serif-zh), serif",
-                textShadow: "0 1px 2px rgba(0,0,0,0.5)",
               }}>
                 允物
               </h1>
               <p style={{
                 margin: "4px 0 0 0",
                 fontSize: "0.65rem",
-                color: "rgba(246,241,235,0.45)",
+                color: "rgba(61,50,38,0.45)",
                 letterSpacing: "0.08em",
               }}>
                 让物归物，让心归心
@@ -171,11 +170,11 @@ export default function Sidebar() {
                     display: "flex", alignItems: "center", gap: 11,
                     padding: "10px 14px", borderRadius: 10,
                     fontSize: "0.85rem", fontWeight: isActive ? 600 : 400,
-                    color: isActive ? "#f6f1eb" : "rgba(246,241,235,0.6)",
+                    color: isActive ? "#3D3226" : "rgba(61,50,38,0.55)",
                     background: isActive
-                      ? "linear-gradient(135deg, rgba(180,83,9,0.2), rgba(180,83,9,0.08))"
+                      ? "linear-gradient(135deg, rgba(180,83,9,0.08), rgba(180,83,9,0.03))"
                       : "transparent",
-                    border: isActive ? "1px solid rgba(180,83,9,0.25)" : "1px solid transparent",
+                    border: isActive ? "1px solid rgba(180,83,9,0.18)" : "1px solid transparent",
                     transition: "all 0.2s ease",
                     textDecoration: "none",
                     marginBottom: 3,
@@ -184,14 +183,14 @@ export default function Sidebar() {
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      (e.target as HTMLElement).style.background = "rgba(246,241,235,0.06)";
-                      (e.target as HTMLElement).style.color = "rgba(246,241,235,0.85)";
+                      (e.target as HTMLElement).style.background = "rgba(61,50,38,0.05)";
+                      (e.target as HTMLElement).style.color = "rgba(61,50,38,0.85)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       (e.target as HTMLElement).style.background = "transparent";
-                      (e.target as HTMLElement).style.color = "rgba(246,241,235,0.6)";
+                      (e.target as HTMLElement).style.color = "rgba(61,50,38,0.55)";
                     }
                   }}
                 >
@@ -221,11 +220,11 @@ export default function Sidebar() {
                     display: "flex", alignItems: "center", gap: 11,
                     width: "100%", padding: "10px 14px", borderRadius: 10,
                     fontSize: "0.85rem", fontWeight: isParentActive ? 600 : 400,
-                    color: isParentActive ? "#f6f1eb" : "rgba(246,241,235,0.6)",
+                    color: isParentActive ? "#3D3226" : "rgba(61,50,38,0.55)",
                     background: isParentActive
-                      ? "linear-gradient(135deg, rgba(180,83,9,0.2), rgba(180,83,9,0.08))"
+                      ? "linear-gradient(135deg, rgba(180,83,9,0.08), rgba(180,83,9,0.03))"
                       : "transparent",
-                    border: isParentActive ? "1px solid rgba(180,83,9,0.25)" : "1px solid transparent",
+                    border: isParentActive ? "1px solid rgba(180,83,9,0.18)" : "1px solid transparent",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     marginBottom: 3,
@@ -233,14 +232,14 @@ export default function Sidebar() {
                   }}
                   onMouseEnter={(e) => {
                     if (!isParentActive) {
-                      e.currentTarget.style.background = "rgba(246,241,235,0.06)";
-                      e.currentTarget.style.color = "rgba(246,241,235,0.85)";
+                      e.currentTarget.style.background = "rgba(61,50,38,0.05)";
+                      e.currentTarget.style.color = "rgba(61,50,38,0.85)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isParentActive) {
                       e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(246,241,235,0.6)";
+                      e.currentTarget.style.color = "rgba(61,50,38,0.55)";
                     }
                   }}
                 >
@@ -296,25 +295,25 @@ export default function Sidebar() {
                             display: "flex", alignItems: "center", gap: 9,
                             padding: "8px 14px", borderRadius: 8,
                             fontSize: "0.8rem", fontWeight: childActive ? 600 : 400,
-                            color: childActive ? "#fbbf24" : "rgba(246,241,235,0.45)",
+                            color: childActive ? "#b45309" : "rgba(61,50,38,0.45)",
                             background: childActive
-                              ? "linear-gradient(135deg, rgba(251,191,36,0.10), rgba(180,83,9,0.06))"
+                              ? "linear-gradient(135deg, rgba(251,191,36,0.10), rgba(180,83,9,0.04))"
                               : "transparent",
-                            border: childActive ? "1px solid rgba(251,191,36,0.15)" : "1px solid transparent",
+                            border: childActive ? "1px solid rgba(251,191,36,0.18)" : "1px solid transparent",
                             transition: "all 0.2s ease",
                             textDecoration: "none",
                             marginBottom: 2,
                           }}
                           onMouseEnter={(e) => {
                             if (!childActive) {
-                              (e.target as HTMLElement).style.background = "rgba(246,241,235,0.04)";
-                              (e.target as HTMLElement).style.color = "rgba(246,241,235,0.7)";
+                              (e.target as HTMLElement).style.background = "rgba(61,50,38,0.04)";
+                              (e.target as HTMLElement).style.color = "rgba(61,50,38,0.7)";
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!childActive) {
                               (e.target as HTMLElement).style.background = "transparent";
-                              (e.target as HTMLElement).style.color = "rgba(246,241,235,0.45)";
+                              (e.target as HTMLElement).style.color = "rgba(61,50,38,0.45)";
                             }
                           }}
                         >
@@ -332,7 +331,7 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderTop: "1px solid rgba(61,50,38,0.08)",
         }}>
           {/* User Info */}
           {session?.user && (
@@ -344,8 +343,8 @@ export default function Sidebar() {
                 width: 32, height: 32, borderRadius: 10,
                 overflow: "hidden",
                 flexShrink: 0,
-                background: "linear-gradient(135deg, rgba(180,83,9,0.3), rgba(120,60,10,0.2))",
-                border: "1px solid rgba(246,241,235,0.15)",
+                background: "linear-gradient(135deg, rgba(180,83,9,0.15), rgba(120,60,10,0.06))",
+                border: "1px solid rgba(180,83,9,0.15)",
               }}>
                 {(session.user as any).avatar ? (
                   <img
@@ -363,7 +362,7 @@ export default function Sidebar() {
                     width: "100%", height: "100%",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: "0.8rem", fontWeight: 600,
-                    color: "#f6f1eb",
+                    color: "#3D3226",
                   }}>
                     {(session.user.name || session.user.email || "A").charAt(0).toUpperCase()}
                   </div>
@@ -372,14 +371,14 @@ export default function Sidebar() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   margin: 0, fontSize: "0.78rem", fontWeight: 500,
-                  color: "rgba(246,241,235,0.85)",
+                  color: "rgba(61,50,38,0.8)",
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {session.user.name || session.user.email}
                 </p>
                 <p style={{
                   margin: 0, fontSize: "0.65rem",
-                  color: "rgba(246,241,235,0.4)",
+                  color: "rgba(61,50,38,0.4)",
                 }}>
                   {(session.user as any).role === "admin" ? "管理员" : "用户"}
                 </p>
@@ -399,12 +398,12 @@ export default function Sidebar() {
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(220,38,38,0.12)";
-                e.currentTarget.style.color = "rgba(246,241,235,0.8)";
+                e.currentTarget.style.background = "rgba(220,38,38,0.08)";
+                e.currentTarget.style.color = "rgba(220,38,38,0.8)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "rgba(246,241,235,0.4)";
+                e.currentTarget.style.color = "rgba(61,50,38,0.35)";
               }}
             >
               <LogOut size={13} />
@@ -414,7 +413,7 @@ export default function Sidebar() {
 
           <div style={{
             padding: "0 24px 14px",
-            fontSize: "0.62rem", color: "rgba(246,241,235,0.22)", letterSpacing: "0.05em",
+            fontSize: "0.62rem", color: "rgba(61,50,38,0.25)", letterSpacing: "0.05em",
           }}>
             © 2026  允物品牌
           </div>
