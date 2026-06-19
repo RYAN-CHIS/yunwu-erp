@@ -200,13 +200,20 @@ export default function MaterialsClient({
   // 排序
   const { sorted: sortedMaterials, sortKey, sortDir, toggleSort } = useSort(materials);
 
-  // 搜索过滤
-  const filtered = searchQuery
-    ? sortedMaterials.filter((m) => {
-        const q = searchQuery.toLowerCase();
-        return m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q);
-      })
-    : sortedMaterials;
+  // 搜索过滤 + 分类视图过滤
+  const filtered = sortedMaterials.filter((m) => {
+    // 分类视图过滤
+    if (activeView === "bead" && m.materialType !== "BEAD") return false;
+    if (activeView === "ceramic" && m.materialType !== "CERAMIC") return false;
+    if (activeView === "metal" && m.category !== "配件") return false;
+
+    // 搜索过滤
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   const isBeadType = form.materialType === "BEAD";
 
