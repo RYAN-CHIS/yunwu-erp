@@ -69,7 +69,7 @@ const typeMap: Record<string, { label: string; color: string; icon: React.ReactN
   ADJUST: { label: "调整", color: "#d97706", icon: <RefreshCw size={12} /> },
 };
 
-export default function InventoryClient({ materials, transactions }: { materials: Material[]; transactions: Transaction[] }) {
+export default function InventoryClient({ materials, transactions, showCost = true }: { materials: Material[]; transactions: Transaction[]; showCost?: boolean }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ materialId: 0, type: "OUT", quantity: 0, remark: "" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -301,9 +301,11 @@ export default function InventoryClient({ materials, transactions }: { materials
               </span>
               <span className="text-sm" style={{ color: "var(--ink-light)" }}>颗</span>
             </div>
+            {showCost && (
             <div className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
               库存总值 <span style={{ color: "#b45309", fontWeight: 600 }}>¥{beadTotalValue.toFixed(2)}</span>
             </div>
+            )}
           </div>
 
           {/* 配件系统 */}
@@ -320,9 +322,11 @@ export default function InventoryClient({ materials, transactions }: { materials
               </span>
               <span className="text-sm" style={{ color: "var(--ink-light)" }}>个</span>
             </div>
+            {showCost && (
             <div className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
               库存总值 <span style={{ color: "#64748b", fontWeight: 600 }}>¥{metalTotalValue.toFixed(2)}</span>
             </div>
+            )}
           </div>
 
           {/* 总计 */}
@@ -335,9 +339,9 @@ export default function InventoryClient({ materials, transactions }: { materials
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-bold font-mono" style={{ color: "#b45309" }}>
-                ¥{allTotalValue.toFixed(0)}
+                {showCost ? `¥${allTotalValue.toFixed(0)}` : `${materials.length} 种材料`}
               </span>
-              <span className="text-sm" style={{ color: "var(--ink-light)" }}>库存总值</span>
+              {showCost && <span className="text-sm" style={{ color: "var(--ink-light)" }}>库存总值</span>}
             </div>
             <div className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
               珠子 {beadTotalCount.toLocaleString()} 颗 + 配件 {metalTotalCount.toLocaleString()} 个
@@ -378,15 +382,14 @@ export default function InventoryClient({ materials, transactions }: { materials
                 {renderMaterialsSortThRight("克重/条", "weightPerStrand")}
                 <th className="text-right p-3">采购库存</th>
                 {renderMaterialsSortThRight("核算库存", "remaining")}
-                <th className="text-right p-3">采购单价</th>
-                {renderMaterialsSortThRight("核算单价", "unitCost")}
-                <th className="text-right p-3">库存总值</th>
+                {showCost && <th className="text-right p-3">采购单价</th>}
+                {showCost && renderMaterialsSortThRight("核算单价", "unitCost")}
+                {showCost && <th className="text-right p-3">库存总值</th>}
                 <th className="text-center p-3">状态</th>
               </tr>
             </thead>
             <tbody>
               {paginatedMaterials.map((m) => {
-                const totalValue = (m.unitCost ?? 0) * m.remaining;
                 const lowStock = m.remaining < 50;
                 return (
                   <tr key={m.id} className="border-t border-[var(--border)] hover:bg-[rgba(245,240,230,0.4)]">
@@ -402,11 +405,17 @@ export default function InventoryClient({ materials, transactions }: { materials
                     <td className="p-3 text-right font-mono font-medium" style={{ color: lowStock ? "#dc2626" : "inherit" }}>
                       {inventoryStock(m.remaining, m.inventoryUnit)}
                     </td>
+                    {showCost && (
                     <td className="p-3 text-right font-mono text-xs" style={{ color: "var(--ink-light)" }}>
                       {purchaseUnitPrice(m.unitCost, m.defaultConversionRate)}
                     </td>
+                    )}
+                    {showCost && (
                     <td className="p-3 text-right font-mono">{inventoryUnitPrice(m.unitCost)}</td>
-                    <td className="p-3 text-right font-mono" style={{ color: "var(--zhu)" }}>¥{totalValue.toFixed(2)}</td>
+                    )}
+                    {showCost && (
+                    <td className="p-3 text-right font-mono" style={{ color: "var(--zhu)" }}>¥{((m.unitCost ?? 0) * m.remaining).toFixed(2)}</td>
+                    )}
                     <td className="p-3 text-center">
                       {lowStock ? (
                         <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>

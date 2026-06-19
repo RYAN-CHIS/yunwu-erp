@@ -16,14 +16,14 @@ import {
   Layers,
   LogOut,
   Settings,
-  Users,
   ShoppingCart,
-  Receipt,
+  ClipboardCheck,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { ROLE_LABELS, normalizeRole } from "@/lib/permissions";
 
-// 东方美学深色调色板 — 以 #50677D 为基调
+// 东方美学深色调色板
 const COLORS = {
   bgGradient:     "linear-gradient(175deg, #3D5265 0%, #50677D 40%, #445B6F 100%)",
   text:           "#F5F2EE",
@@ -51,38 +51,21 @@ const COLORS = {
   expandArrow:    "rgba(245,242,238,0.62)",
 } as const;
 
-const navItems = [
-  { href: "/dashboard",  label: "总览",     icon: LayoutDashboard },
-  { href: "/series",     label: "七序管理", icon: Layers },
-  { href: "/works",      label: "作品管理", icon: Sparkle },
-  { href: "/products",   label: "产品/SKU",  icon: Gem },
-  {
-    href: "/materials",
-    label: "原材料",
-    icon: Package,
-    children: [
-      { href: "/materials",            label: "全部材料", icon: "📦" },
-      { href: "/materials?view=bead",   label: "珠子系统", icon: "🫧" },
-      { href: "/materials?view=ceramic",label: "瓷器系统", icon: "🏺" },
-      { href: "/materials?view=metal",  label: "金属配件", icon: "⚙️" },
-      { href: "/materials?view=seal",   label: "印章系统", icon: "🔖" },
-    ],
-  },
-  { href: "/bom",        label: "BOM",       icon: Layers },
-  { href: "/costs",      label: "成本核算", icon: DollarSign },
-  { href: "/inventory",  label: "库存池",   icon: Warehouse },
-  {
-    href: "/orders",
-    label: "销售管理",
-    icon: ShoppingCart,
-    children: [
-      { href: "/orders",    label: "订单管理", icon: "📋" },
-      { href: "/customers", label: "客户管理", icon: "👤" },
-    ],
-  },
-  { href: "/import",     label: "数据导入", icon: Upload },
-  { href: "/settings",   label: "系统设置", icon: Settings },
-];
+// ─── 导航项类型定义 ───
+interface NavChild {
+  href: string;
+  label: string;
+  icon: string;
+}
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  permission?: string;       // 所需权限点代码
+  editorPermission?: string; // 创建/编辑所需权限点
+  children?: NavChild[];
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -91,16 +74,73 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | false>(false);
 
-  // Session
   const { data: session } = useSession();
+  const role = normalizeRole((session?.user as any)?.role);
+  const permissions: string[] = (session?.user as any)?.permissions || [];
+
+  // 是否拥有某权限点
+  const hasPerm = (code: string) => {
+    if (role === "admin") return true;
+    if (permissions.includes("super.admin")) return true;
+    return permissions.includes(code);
+  };
+
+  // ─── 权限驱动的导航菜单 ───
+  const baseNavItems = useMemo((): NavItem[] => {
+    const allItems: NavItem[] = [
+      { href: "/dashboard",  label: "总览",     icon: LayoutDashboard, permission: "dashboard.view" },
+      { href: "/series",     label: "七序管理", icon: Layers,          permission: "work.view" },
+      { href: "/works",      label: "作品管理", icon: Sparkle,         permission: "work.view" },
+      { href: "/products",   label: "产品/SKU",  icon: Gem,            permission: "product.view" },
+      {
+        href: "/materials",
+        label: "材料管理",
+        icon: Package,
+        permission: "material.view",
+        children: [
+          { href: "/materials",            label: "全部材料", icon: "📦" },
+          { href: "/materials?view=bead",   label: "珠子系统", icon: "🫧" },
+          { href: "/materials?view=ceramic",label: "瓷器系统", icon: "🏺" },
+          { href: "/materials?view=metal",  label: "金属配件", icon: "⚙️" },
+          { href: "/materials?view=seal",   label: "印章系统", icon: "🔖" },
+        ],
+      },
+      { href: "/bom",         label: "BOM",       icon: Layers,          permission: "bom.view" },
+      { href: "/costs",       label: "成本核算", icon: DollarSign,       permission: "cost.view" },
+      { href: "/productions", label: "生产记录", icon: ClipboardCheck,   permission: "production.view" },
+      { href: "/inventory",   label: "库存池",   icon: Warehouse,       permission: "inventory.view" },
+      {
+        href: "/orders",
+        label: "销售管理",
+        icon: ShoppingCart,
+        permission: "order.view",
+        children: [
+          { href: "/orders",  label: "订单管理", icon: "📋" },
+          { href: "/customers", label: "客户管理", icon: "👤",  },
+        ],
+      },
+      { href: "/import",      label: "数据导入", icon: Upload,           permission: "import.data" },
+      { href: "/settings",    label: "系统设置", icon: Settings,         permission: "setting.view" },
+    ];
+
+    return allItems.filter((item) => {
+      // admin 看全部
+      if (role === "admin") return true;
+      // 有权限点则检查
+      if (item.permission) {
+        return hasPerm(item.permission);
+      }
+      return true;
+    });
+  }, [role, permissions]);
 
   // 路由变化时自动展开/收起对应的父级菜单
   useEffect(() => {
-    const parentItem = navItems.find(
+    const parentItem = baseNavItems.find(
       (item) => "children" in item && item.children?.some((child) => pathname.startsWith(child.href.split("?")[0]))
     );
     setExpanded(!!parentItem ? parentItem.href : false);
-  }, [pathname]);
+  }, [pathname, baseNavItems]);
 
   return (
     <>
@@ -131,10 +171,9 @@ export default function Sidebar() {
           boxShadow: "4px 0 32px rgba(0,0,0,0.25)",
         }}
       >
-        {/* Logo — 紧凑布局 */}
+        {/* Logo */}
         <div style={{ padding: "22px 18px 16px", borderBottom: `1px solid ${COLORS.border}` }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            {/* Logo Image */}
             <div style={{
               width: 64, height: 64, borderRadius: 14,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -160,7 +199,7 @@ export default function Sidebar() {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
-          {navItems.map((item) => {
+          {baseNavItems.map((item) => {
             const hasChildren = "children" in item && item.children;
             const isActive = !hasChildren && pathname === item.href;
             const isParentActive = hasChildren && pathname.startsWith(item.href);
@@ -258,19 +297,13 @@ export default function Sidebar() {
                   <item.icon size={17} style={{ flexShrink: 0, opacity: isParentActive ? 1 : 0.75 }} />
                   <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
                   <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round"
                     style={{
                       transform: expanded === item.href ? "rotate(90deg)" : "rotate(0deg)",
                       transition: "transform 0.25s ease",
-                      opacity: 0.4,
-                      flexShrink: 0,
+                      opacity: 0.4, flexShrink: 0,
                     }}
                   >
                     <polyline points="9 18 15 12 9 6" />
@@ -282,8 +315,6 @@ export default function Sidebar() {
                       const childView = new URLSearchParams(
                         child.href.includes("?") ? child.href.split("?")[1] : ""
                       ).get("view");
-                      // "全部材料"：仅在无 view 参数时高亮
-                      // 分类项：仅当 view 参数匹配时高亮
                       const childActive = childView
                         ? pathname === "/materials" && currentView === childView
                         : pathname === "/materials" && !currentView;
@@ -303,18 +334,6 @@ export default function Sidebar() {
                             textDecoration: "none",
                             marginBottom: 2,
                           }}
-                          onMouseEnter={(e) => {
-                            if (!childActive) {
-                              (e.target as HTMLElement).style.background = COLORS.hoverBg;
-                              (e.target as HTMLElement).style.color = COLORS.submenuHover;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!childActive) {
-                              (e.target as HTMLElement).style.background = "transparent";
-                              (e.target as HTMLElement).style.color = COLORS.submenuText;
-                            }
-                          }}
                         >
                           <span style={{ fontSize: "0.8rem" }}>{child.icon}</span>
                           {child.label}
@@ -328,7 +347,7 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer — 用户信息 + 退出 横排 */}
+        {/* Footer */}
         <div style={{
           borderTop: `1px solid ${COLORS.border}`,
           padding: "10px 14px 12px",
@@ -336,7 +355,6 @@ export default function Sidebar() {
         }}>
           {session?.user && (
             <>
-              {/* 头像 */}
               <div style={{
                 width: 30, height: 30, borderRadius: 9,
                 overflow: "hidden", flexShrink: 0,
@@ -360,7 +378,6 @@ export default function Sidebar() {
                   </div>
                 )}
               </div>
-              {/* 名字 + 角色 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   margin: 0, fontSize: "0.78rem", fontWeight: 500,
@@ -371,12 +388,11 @@ export default function Sidebar() {
                   {session.user.name || session.user.email}
                 </p>
                 <p style={{ margin: "1px 0 0 0", fontSize: "0.6rem", color: COLORS.userRoleText, lineHeight: 1.2 }}>
-                  {(session.user as any).role === "admin" ? "管理员" : "用户"}
+                  {ROLE_LABELS[role] || "用户"}
                 </p>
               </div>
             </>
           )}
-          {/* 退出按钮 — 图标紧凑版 */}
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             title="退出登录"
@@ -387,12 +403,8 @@ export default function Sidebar() {
               cursor: "pointer", flexShrink: 0,
               transition: "all 0.2s ease",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = COLORS.logoutHoverBg;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = COLORS.logoutHoverBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             <LogOut size={14} style={{ color: COLORS.logoutText }} />
           </button>

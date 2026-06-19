@@ -39,7 +39,7 @@ const CATEGORY_VIEWS = [
   { key: "", label: "全部材料", icon: "📦" },
   { key: "bead", label: "珠子系统", icon: "🫧" },
   { key: "ceramic", label: "瓷器系统", icon: "🏺" },
-  { key: "metal", label: "金属配件", icon: "⚙️" },
+  { key: "metal", label: "配件系统", icon: "⚙️" },
   { key: "seal", label: "印章系统", icon: "🔖" },
 ];
 
@@ -180,9 +180,11 @@ function inventoryUnitPrice(unitCost: number | null): string {
 export default function MaterialsClient({
   materials,
   activeView,
+  showCost = true,
 }: {
   materials: RawMaterial[];
   activeView: string;
+  showCost?: boolean;
 }) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
@@ -462,7 +464,7 @@ export default function MaterialsClient({
     <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
         <div className="flex items-center justify-between shrink-0">
           <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
-            {CATEGORY_VIEWS.find((v) => v.key === activeView)?.label || "原材料库"}
+            {CATEGORY_VIEWS.find((v) => v.key === activeView)?.label || "材料管理"}
           </h1>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -516,7 +518,6 @@ export default function MaterialsClient({
                   </span>
                 </th>
                 {renderSortTh("名称", "name")}
-                {renderSortTh("类型", "materialType")}
                 {renderSortTh("分类", "category")}
                 {renderSortTh("规格", "specification")}
                 {renderSortTh("形状", "shape")}
@@ -524,16 +525,14 @@ export default function MaterialsClient({
                 {renderSortThRight("克重/条", "weightPerStrand")}
                 <th className="text-right p-3">采购库存</th>
                 {renderSortThRight("核算库存", "remaining")}
-                <th className="text-right p-3">采购单价</th>
-                {renderSortThRight("核算单价", "unitCost")}
-                <th className="text-right p-3">库存总值</th>
-                {renderSortThCenter("状态", "status")}
+                {showCost && <th className="text-right p-3">采购单价</th>}
+                {showCost && renderSortThRight("核算单价", "unitCost")}
+                {showCost && <th className="text-right p-3">库存总值</th>}
                 <th className="text-center p-3">操作</th>
               </tr>
             </thead>
             <tbody>
               {paginated.map((m) => {
-                const totalValue = (m.unitCost ?? 0) * m.remaining;
                 return (
                 <tr
                   key={m.id}
@@ -541,11 +540,6 @@ export default function MaterialsClient({
                 >
                   <td className="p-3 font-mono text-xs">{m.code}</td>
                   <td className="p-3 font-medium">{m.name}</td>
-                  <td className="p-3">
-                    <span className="text-xs px-2 py-0.5 rounded bg-[rgba(180,83,9,0.08)]">
-                      {materialTypeOptions.find((o) => o.value === m.materialType)?.label || m.materialType}
-                    </span>
-                  </td>
                   <td className="p-3 text-xs">{m.category || "-"}</td>
                   <td className="p-3 text-xs" style={{ color: "var(--ink-light)" }}>{m.specification || "-"}</td>
                   <td className="p-3 text-xs">{m.shape || "-"}</td>
@@ -557,32 +551,21 @@ export default function MaterialsClient({
                   <td className="p-3 text-right font-mono font-medium">
                     {inventoryStock(m.remaining, m.inventoryUnit)}
                   </td>
-                  <td className="p-3 text-right font-mono text-xs" style={{ color: "var(--ink-light)" }}>
-                    {purchaseUnitPrice(m.unitCost, m.defaultConversionRate)}
-                  </td>
-                  <td className="p-3 text-right font-mono">
-                    {inventoryUnitPrice(m.unitCost)}
-                  </td>
-                  <td className="p-3 text-right font-mono" style={{ color: "var(--zhu)" }}>
-                    ¥{totalValue.toFixed(2)}
-                  </td>
-                  <td className="p-3 text-center">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded ${
-                        m.status === "ACTIVE"
-                          ? "bg-green-100 text-green-800"
-                          : m.status === "DRAFT"
-                          ? "bg-gray-100 text-gray-800"
-                          : m.status === "READY"
-                          ? "bg-blue-100 text-blue-800"
-                          : m.status === "PAUSED"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {statusOptions.find((o) => o.value === m.status)?.label || m.status}
-                    </span>
-                  </td>
+                  {showCost && (
+                    <td className="p-3 text-right font-mono text-xs" style={{ color: "var(--ink-light)" }}>
+                      {purchaseUnitPrice(m.unitCost, m.defaultConversionRate)}
+                    </td>
+                  )}
+                  {showCost && (
+                    <td className="p-3 text-right font-mono">
+                      {inventoryUnitPrice(m.unitCost)}
+                    </td>
+                  )}
+                  {showCost && (
+                    <td className="p-3 text-right font-mono" style={{ color: "var(--zhu)" }}>
+                      ¥{((m.unitCost ?? 0) * m.remaining).toFixed(2)}
+                    </td>
+                  )}
                   <td className="p-3">
                     <div className="flex justify-center gap-2">
                       <button
@@ -616,7 +599,7 @@ export default function MaterialsClient({
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={15} className="p-6 text-center" style={{ color: "var(--ink-light)" }}>
+                  <td colSpan={showCost ? 13 : 10} className="p-6 text-center" style={{ color: "var(--ink-light)" }}>
                     {searchQuery ? `未找到匹配"${searchQuery}"的材料` : "暂无数据，点击「新增材料」录入"}
                   </td>
                 </tr>
@@ -984,9 +967,17 @@ export default function MaterialsClient({
                     style={{ borderColor: "var(--border)" }}
                   >
                     <option value="">无</option>
-                    <option value="方糖">方糖</option>
                     <option value="圆珠">圆珠</option>
+                    <option value="挂饰">挂饰</option>
+                    <option value="三通">三通</option>
+                    <option value="单面珠">单面珠</option>
+                    <option value="隔片">隔片</option>
+                    <option value="老型">老型</option>
+                    <option value="汉堡珠">汉堡珠</option>
+                    <option value="方糖">方糖</option>
+                    <option value="桶珠">桶珠</option>
                     <option value="随形">随形</option>
+                    <option value="方块">方块</option>
                   </select>
                 </label>
                 <label className="space-y-1">
@@ -1050,7 +1041,7 @@ export default function MaterialsClient({
         <form onSubmit={savePurchase} className="space-y-5">
           <div className="p-3 rounded-lg bg-blue-50 text-sm" style={{ color: "#1e40af" }}>
             当前库存：{selectedMaterial ? inventoryStock(selectedMaterial.remaining, selectedMaterial.inventoryUnit) : "-"}
-            {selectedMaterial?.unitCost && (
+            {showCost && selectedMaterial?.unitCost && (
               <span className="ml-2">核算单价：{inventoryUnitPrice(selectedMaterial.unitCost)}</span>
             )}
           </div>

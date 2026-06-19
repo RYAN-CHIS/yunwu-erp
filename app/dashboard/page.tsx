@@ -1,31 +1,68 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { normalizeRole, Role, canViewCost, canViewProfit } from "@/lib/permissions";
 import {
   Package,
   Layers,
   DollarSign,
   Warehouse,
   ArrowRight,
+  AlertTriangle,
+  Gem,
 } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
-async function getStats() {
+async function getStats(role: Role, permissions: string[]) {
+  const showCost = canViewProfit(role, permissions);
+
   const [
     materialCount,
     seriesCount,
     worksCount,
     skuCount,
     inventoryTotal,
-    costTotal,
   ] = await Promise.all([
     prisma.rawMaterial.count(),
     prisma.series.count(),
     prisma.works.count(),
     prisma.productSku.count(),
     prisma.rawMaterial.aggregate({ _sum: { remaining: true } }),
-    prisma.productCost.aggregate({ _sum: { totalCost: true } }),
   ]);
+
+  let costTotal = 0;
+  let totalGrossProfit = 0;
+  let profitRanking: any[] = [];
+
+  if (showCost) {
+    const [costAgg] = await Promise.all([
+      prisma.productCost.aggregate({ _sum: { totalCost: true } }),
+    ]);
+    costTotal = costAgg._sum.totalCost ?? 0;
+
+    // SKU 利润排行（Top 5）
+    const skusWithCost = await prisma.productSku.findMany({
+      where: { cost: { isNot: null } },
+      include: { cost: true },
+      orderBy: { price: "desc" },
+      take: 5,
+    });
+    profitRanking = skusWithCost
+      .map((sku) => ({
+        code: sku.code,
+        name: sku.name,
+        price: sku.price,
+        cost: sku.cost?.totalCost ?? 0,
+        profit: sku.price - (sku.cost?.totalCost ?? 0),
+        margin:
+          sku.price > 0
+            ? Math.round(((sku.price - (sku.cost?.totalCost ?? 0)) / sku.price) * 10000) / 100
+            : 0,
+      }))
+      .sort((a, b) => b.profit - a.profit);
+  }
 
   return {
     materialCount,
@@ -33,18 +70,31 @@ async function getStats() {
     worksCount,
     skuCount,
     inventoryTotal: inventoryTotal._sum.remaining ?? 0,
-    costTotal: costTotal._sum.totalCost ?? 0,
+    costTotal,
+    totalGrossProfit,
+    profitRanking,
+    showCost,
   };
 }
 
-async function getRecentPurchases() {
-  return prisma.purchaseRecord.findMany({
+async function getRecentPurchases(role: Role, permissions: string[]) {
+  const purchases = await prisma.purchaseRecord.findMany({
     include: {
       material: { select: { code: true, name: true, category: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 5,
   });
+
+  // 非 Admin/非成本权限 不显示金额
+  if (!canViewCost(role, permissions)) {
+    return purchases.map((p) => ({
+      ...p,
+      purchasePrice: undefined,
+      purchaseUnitPrice: undefined,
+    }));
+  }
+  return purchases;
 }
 
 async function getLowInventory() {
@@ -55,12 +105,27 @@ async function getLowInventory() {
   });
 }
 
-export default async function DashboardPage() {
-  const [stats, recentPurchases, lowInventory] = await Promise.all([
-    getStats(),
-    getRecentPurchases(),
-    getLowInventory(),
+async function getStockAlerts() {
+  const [lowStock, zeroStock] = await Promise.all([
+    prisma.rawMaterial.count({ where: { remaining: { gt: 0, lte: 50 } } }),
+    prisma.rawMaterial.count({ where: { remaining: { lte: 0 } } }),
   ]);
+  return { lowStock, zeroStock };
+}
+
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  const role = normalizeRole((session?.user as any)?.role);
+  const permissions: string[] = (session?.user as any)?.permissions || [];
+
+  const [stats, recentPurchases, lowInventory, stockAlerts] = await Promise.all([
+    getStats(role, permissions),
+    getRecentPurchases(role, permissions),
+    getLowInventory(),
+    getStockAlerts(),
+  ]);
+
+  const showCost = canViewProfit(role, permissions);
 
   return (
     <div className="space-y-8">
@@ -74,7 +139,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards — 所有角色可见基础统计 */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           icon={<Package size={20} />}
@@ -98,30 +163,66 @@ export default async function DashboardPage() {
           color="var(--zhu)"
         />
         <StatCard
-          icon={<Warehouse size={20} />}
+          icon={<Gem size={20} />}
           label="SKU 总数"
           value={stats.skuCount}
           href="/products"
           color="var(--zhu)"
         />
         <StatCard
-          icon={<Package size={20} />}
+          icon={<Warehouse size={20} />}
           label="库存总量"
           value={Number(stats.inventoryTotal).toFixed(1)}
           href="/inventory"
           color="var(--jin)"
         />
-        <StatCard
-          icon={<DollarSign size={20} />}
-          label="总成本"
-          value={`¥${Number(stats.costTotal).toFixed(2)}`}
-          href="/costs"
-          color="var(--jin)"
-        />
+
+        {/* Admin 专属：成本和金额卡片 */}
+        {showCost && (
+          <>
+            <StatCard
+              icon={<DollarSign size={20} />}
+              label="总成本"
+              value={`¥${Number(stats.costTotal).toFixed(2)}`}
+              href="/costs"
+              color="var(--jin)"
+            />
+          </>
+        )}
+      </div>
+
+      {/* 库存预警 — 所有角色可见 */}
+      <div className="grid grid-cols-2 gap-3">
+        <div
+          className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-4 flex items-center gap-3"
+        >
+          <AlertTriangle size={20} style={{ color: stockAlerts.zeroStock > 0 ? "#dc2626" : "#f59e0b" }} />
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+              {stockAlerts.zeroStock > 0 ? `${stockAlerts.zeroStock} 种材料已耗尽` : "材料库存正常"}
+            </p>
+            <p className="text-xs" style={{ color: "var(--ink-light)" }}>
+              {stockAlerts.lowStock} 种低库存 · 共 {stats.materialCount} 种材料
+            </p>
+          </div>
+        </div>
+        <div
+          className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-4 flex items-center gap-3"
+        >
+          <Warehouse size={20} style={{ color: "var(--zhu)" }} />
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+              {stats.skuCount} 个 SKU
+            </p>
+            <p className="text-xs" style={{ color: "var(--ink-light)" }}>
+              覆盖 {stats.seriesCount} 个序列 · {stats.worksCount} 个作品
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Purchases */}
+        {/* 最近采购 — Operator/Viewer 看不到金额 */}
         <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold" style={{ color: "var(--ink)" }}>
@@ -137,7 +238,7 @@ export default async function DashboardPage() {
                 暂无采购记录
               </p>
             )}
-            {recentPurchases.map((p) => (
+            {recentPurchases.map((p: any) => (
               <div
                 key={p.id}
                 className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0"
@@ -151,9 +252,11 @@ export default async function DashboardPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium" style={{ color: "var(--zhu)" }}>
-                    ¥{p.purchasePrice.toFixed(2)}
-                  </p>
+                  {showCost && p.purchasePrice !== undefined && (
+                    <p className="text-sm font-medium" style={{ color: "var(--zhu)" }}>
+                      ¥{Number(p.purchasePrice).toFixed(2)}
+                    </p>
+                  )}
                   <p className="text-xs" style={{ color: "var(--ink-light)" }}>
                     {p.purchaseQuantity} {p.purchaseUnit}
                   </p>
@@ -163,7 +266,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Low Inventory Alert */}
+        {/* 库存预警 — 所有角色可见 */}
         <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold" style={{ color: "var(--ink)" }}>
@@ -206,6 +309,51 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin 专属：利润排行 */}
+      {showCost && stats.profitRanking.length > 0 && (
+        <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold" style={{ color: "var(--ink)" }}>
+              SKU 利润排行
+            </h2>
+            <Link href="/costs" className="text-sm flex items-center gap-1" style={{ color: "var(--zhu)" }}>
+              查看全部 <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                  <th className="text-left p-2 font-medium" style={{ color: "var(--ink-light)" }}>SKU</th>
+                  <th className="text-right p-2 font-medium" style={{ color: "var(--ink-light)" }}>售价</th>
+                  <th className="text-right p-2 font-medium" style={{ color: "var(--ink-light)" }}>成本</th>
+                  <th className="text-right p-2 font-medium" style={{ color: "var(--ink-light)" }}>利润</th>
+                  <th className="text-right p-2 font-medium" style={{ color: "var(--ink-light)" }}>毛利率</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.profitRanking.map((item: any) => (
+                  <tr key={item.code} style={{ borderBottom: "1px solid #f0ebe0" }}>
+                    <td className="p-2">
+                      <span className="font-medium" style={{ color: "var(--ink)" }}>{item.name}</span>
+                      <span className="ml-2 text-xs" style={{ color: "var(--ink-light)" }}>{item.code}</span>
+                    </td>
+                    <td className="text-right p-2" style={{ color: "var(--ink)" }}>¥{item.price}</td>
+                    <td className="text-right p-2" style={{ color: "var(--ink)" }}>¥{item.cost}</td>
+                    <td className="text-right p-2 font-medium" style={{ color: item.profit >= 0 ? "#16a34a" : "#dc2626" }}>
+                      ¥{item.profit}
+                    </td>
+                    <td className="text-right p-2" style={{ color: item.margin >= 0 ? "#16a34a" : "#dc2626" }}>
+                      {item.margin}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

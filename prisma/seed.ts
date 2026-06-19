@@ -3,6 +3,198 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// ═══════════════════════════════════════════
+// V3: 权限系统种子数据
+// ═══════════════════════════════════════════
+
+const PERMISSION_DATA = [
+  // Dashboard
+  { code: "dashboard.view", name: "Dashboard 查看" },
+  // 产品
+  { code: "product.view", name: "产品查看" },
+  { code: "product.edit", name: "产品编辑" },
+  { code: "product.delete", name: "产品删除" },
+  // SKU
+  { code: "sku.view", name: "SKU 查看" },
+  { code: "sku.edit", name: "SKU 编辑" },
+  { code: "sku.delete", name: "SKU 删除" },
+  // 作品
+  { code: "work.view", name: "作品查看" },
+  { code: "work.edit", name: "作品编辑" },
+  { code: "work.delete", name: "作品删除" },
+  // 材料
+  { code: "material.view", name: "原材料查看" },
+  { code: "material.edit", name: "原材料编辑" },
+  { code: "material.delete", name: "原材料删除" },
+  // 库存
+  { code: "inventory.view", name: "库存查看" },
+  { code: "inventory.edit", name: "库存编辑" },
+  // BOM
+  { code: "bom.view", name: "BOM 查看" },
+  { code: "bom.edit", name: "BOM 编辑" },
+  // 成本
+  { code: "cost.view", name: "成本查看" },
+  { code: "cost.edit", name: "成本编辑" },
+  // 利润
+  { code: "profit.view", name: "利润查看" },
+  // 生产
+  { code: "production.view", name: "生产查看" },
+  { code: "production.create", name: "生产创建" },
+  { code: "production.edit", name: "生产编辑" },
+  // 订单
+  { code: "order.view", name: "订单查看" },
+  { code: "order.edit", name: "订单编辑" },
+  // 客户
+  { code: "customer.view", name: "客户查看" },
+  { code: "customer.edit", name: "客户编辑" },
+  // 用户
+  { code: "user.view", name: "用户查看" },
+  { code: "user.edit", name: "用户编辑" },
+  // 设置
+  { code: "setting.view", name: "设置查看" },
+  { code: "setting.edit", name: "设置编辑" },
+  // 导入导出
+  { code: "import.data", name: "数据导入" },
+  { code: "export.data", name: "数据导出" },
+  // 超级管理员
+  { code: "super.admin", name: "超级管理员" },
+];
+
+const PERMISSION_GROUP_CONFIG = [
+  { code: "dashboard", name: "Dashboard", codes: ["dashboard.view"] },
+  { code: "product", name: "产品管理", codes: ["product.view", "product.edit", "product.delete"] },
+  { code: "sku", name: "SKU 管理", codes: ["sku.view", "sku.edit", "sku.delete"] },
+  { code: "work", name: "作品管理", codes: ["work.view", "work.edit", "work.delete"] },
+  { code: "material", name: "材料管理", codes: ["material.view", "material.edit", "material.delete"] },
+  { code: "inventory", name: "库存管理", codes: ["inventory.view", "inventory.edit"] },
+  { code: "bom", name: "BOM 管理", codes: ["bom.view", "bom.edit"] },
+  { code: "cost", name: "成本管理", codes: ["cost.view", "cost.edit"] },
+  { code: "profit", name: "利润", codes: ["profit.view"] },
+  { code: "production", name: "生产管理", codes: ["production.view", "production.create", "production.edit"] },
+  { code: "order", name: "订单管理", codes: ["order.view", "order.edit"] },
+  { code: "customer", name: "客户管理", codes: ["customer.view", "customer.edit"] },
+  { code: "user", name: "用户管理", codes: ["user.view", "user.edit"] },
+  { code: "setting", name: "系统设置", codes: ["setting.view", "setting.edit"] },
+  { code: "data", name: "数据导入导出", codes: ["import.data", "export.data"] },
+  { code: "super", name: "超级管理员", codes: ["super.admin"] },
+];
+
+const PRESET_TEMPLATES = [
+  {
+    name: "管理员模板",
+    role: "admin",
+    description: "拥有系统全部权限",
+    codes: PERMISSION_DATA.map((p) => p.code),
+  },
+  {
+    name: "运营模板",
+    role: "operator",
+    description: "日常运营权限，不含成本和用户管理",
+    codes: [
+      "dashboard.view", "product.view", "product.edit",
+      "sku.view", "sku.edit", "work.view", "work.edit",
+      "order.view", "order.edit", "customer.view", "customer.edit",
+      "production.view", "production.create",
+      "inventory.view", "bom.view", "material.view",
+    ],
+  },
+  {
+    name: "仓库模板",
+    role: "operator",
+    description: "仓库管理权限，查看库存和材料",
+    codes: [
+      "dashboard.view", "inventory.view", "material.view",
+      "bom.view", "production.view", "sku.view", "product.view",
+    ],
+  },
+  {
+    name: "财务模板",
+    role: "operator",
+    description: "财务权限，可查看成本和利润",
+    codes: [
+      "dashboard.view", "cost.view", "profit.view",
+      "order.view", "product.view", "sku.view",
+    ],
+  },
+  {
+    name: "访客模板",
+    role: "viewer",
+    description: "仅只读基础信息",
+    codes: ["dashboard.view", "product.view", "sku.view", "work.view"],
+  },
+];
+
+async function seedPermissions() {
+  // ── 1. 权限分组 ──
+  for (const group of PERMISSION_GROUP_CONFIG) {
+    await prisma.permissionGroup.upsert({
+      where: { code: group.code },
+      create: { code: group.code, name: group.name },
+      update: { name: group.name },
+    });
+  }
+  console.log("  ✅ 权限分组已就绪");
+
+  // ── 2. 权限点 ──
+  const groups = await prisma.permissionGroup.findMany();
+  const groupMap = Object.fromEntries(groups.map((g) => [g.code, g.id]));
+
+  for (const perm of PERMISSION_DATA) {
+    // 找到所属分组
+    const gcode = PERMISSION_GROUP_CONFIG.find((g) => g.codes.includes(perm.code))?.code;
+    const groupId = gcode ? groupMap[gcode] : null;
+
+    await prisma.permission.upsert({
+      where: { code: perm.code },
+      create: { code: perm.code, name: perm.name, groupId },
+      update: { name: perm.name, groupId },
+    });
+  }
+  console.log("  ✅ 权限点已就绪");
+
+  // ── 3. 权限模板 ──
+  const allPerms = await prisma.permission.findMany();
+  const permMap = Object.fromEntries(allPerms.map((p) => [p.code, p.id]));
+
+  for (const tmpl of PRESET_TEMPLATES) {
+    const existing = await prisma.permissionTemplate.findFirst({
+      where: { name: tmpl.name },
+    });
+
+    if (existing) {
+      // 更新模板
+      await prisma.permissionTemplate.update({
+        where: { id: existing.id },
+        data: { description: tmpl.description },
+      });
+      // 更新模板权限项
+      await prisma.permissionTemplateItem.deleteMany({ where: { templateId: existing.id } });
+      for (const code of tmpl.codes) {
+        const permId = permMap[code];
+        if (permId) {
+          await prisma.permissionTemplateItem.create({
+            data: { templateId: existing.id, permissionId: permId },
+          });
+        }
+      }
+    } else {
+      // 创建模板
+      const newTmpl = await prisma.permissionTemplate.create({
+        data: { name: tmpl.name, role: tmpl.role, description: tmpl.description },
+      });
+      for (const code of tmpl.codes) {
+        const permId = permMap[code];
+        if (permId) {
+          await prisma.permissionTemplateItem.create({
+            data: { templateId: newTmpl.id, permissionId: permId },
+          });
+        }
+      }
+    }
+  }
+  console.log("  ✅ 权限模板已就绪");
+}
+
 // 七序取意
 const SERIES_QUOTES: Record<string, string> = {
   fuchu: "清水出芙蓉，天然去雕饰。",
@@ -141,6 +333,10 @@ const RARITY_MAP: Record<string, number> = {
 };
 
 async function main() {
+  // ── V3: 权限系统种子 ──
+  console.log("\n🔐 初始化权限系统 V3...");
+  await seedPermissions();
+
   // 管理员账号
   const password = await bcrypt.hash("admin123", 10);
   const existing = await prisma.user.findUnique({ where: { email: "admin@yunwu.com" } });

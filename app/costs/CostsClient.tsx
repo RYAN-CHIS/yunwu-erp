@@ -23,17 +23,18 @@ interface Cost {
   storyFactor: number;
   materialCost: number;
   laborCost: number;
+  packagingCost: number;
 }
 
 export default function CostsClient({ list }: { list: Cost[] }) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [laborInput, setLaborInput] = useState("");
+  const [packagingInput, setPackagingInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
 
-  // 排序
   const { sorted: sortedList, sortKey, sortDir, toggleSort } = useSort(list);
 
   const filtered = searchQuery
@@ -48,10 +49,8 @@ export default function CostsClient({ list }: { list: Cost[] }) {
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   function handleSearch(q: string) { setSearchQuery(q); setCurrentPage(1); }
-
   function handleExport() { window.open("/api/export?type=costs", "_blank"); }
 
-  // 渲染排序表头（左对齐）
   function renderSortTh(label: string, key: string) {
     const isActive = sortKey === key;
     const icon = isActive
@@ -74,7 +73,6 @@ export default function CostsClient({ list }: { list: Cost[] }) {
     );
   }
 
-  // 渲染排序表头（右对齐）
   function renderSortThRight(label: string, key: string) {
     const isActive = sortKey === key;
     const icon = isActive
@@ -97,41 +95,18 @@ export default function CostsClient({ list }: { list: Cost[] }) {
     );
   }
 
-  // 渲染排序表头（居中）
-  function renderSortThCenter(label: string, key: string) {
-    const isActive = sortKey === key;
-    const icon = isActive
-      ? sortDir === "asc"
-        ? <ArrowUp size={12} />
-        : <ArrowDown size={12} />
-      : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />;
-    return (
-      <th
-        className="text-center p-3 whitespace-nowrap cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
-        style={{ color: isActive ? "#b45309" : "var(--ink-light)" }}
-        onClick={() => toggleSort(key)}
-        title={`按${label}排序`}
-      >
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center", width: "100%" }}>
-          {label}
-          <span style={{ display: "inline-flex", alignItems: "center" }}>{icon}</span>
-        </span>
-      </th>
-    );
-  }
-
-  // 汇总统计（使用过滤后数据）
   const totalMaterialCost = filtered.reduce((s, r) => s + r.materialCost, 0);
   const totalLaborCost = filtered.reduce((s, r) => s + r.laborCost, 0);
+  const totalPackagingCost = filtered.reduce((s, r) => s + r.packagingCost, 0);
   const totalRevenue = filtered.reduce((s, r) => s + r.price * r.finishedStock, 0);
   const totalProfit = filtered.reduce((s, r) => s + r.grossProfit * r.finishedStock, 0);
 
-  async function saveLaborCost(skuId: number) {
+  async function saveCost(skuId: number) {
     setSaving(true);
     await fetch("/api/costs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ skuId, laborCost: Number(laborInput) }),
+      body: JSON.stringify({ skuId, laborCost: Number(laborInput), packagingCost: Number(packagingInput) }),
     });
     setSaving(false);
     setEditingId(null);
@@ -149,30 +124,32 @@ export default function CostsClient({ list }: { list: Cost[] }) {
 
   return (
     <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
+
+      {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>利润分析</h1>
         <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
-              <input
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                placeholder="搜索SKU或产品…"
-                className="w-48 pl-9 pr-3 py-2 rounded-lg border text-sm"
-                style={{ borderColor: "var(--border)" }}
-              />
-            </div>
-            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "var(--border)" }}>
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
+            <input
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="搜索SKU或产品…"
+              className="w-48 pl-9 pr-3 py-2 rounded-lg border text-sm"
+              style={{ borderColor: "var(--border)" }}
+            />
+          </div>
+          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "var(--border)" }}>
             <Download size={16} />导出
           </button>
           <p className="text-xs" style={{ color: "var(--ink-light)" }}>
-            共 {filtered.length} 个 SKU · 点击行可编辑人工成本
+            共 {filtered.length} 个 SKU · 点击人工/包装成本可编辑
           </p>
         </div>
       </div>
 
       {/* 汇总卡片 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 shrink-0">
         <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-4">
           <p className="text-xs" style={{ color: "var(--ink-light)" }}>材料总成本</p>
           <p className="text-xl font-bold mt-1" style={{ color: "var(--ink)" }}>¥{totalMaterialCost.toFixed(2)}</p>
@@ -180,6 +157,10 @@ export default function CostsClient({ list }: { list: Cost[] }) {
         <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-4">
           <p className="text-xs" style={{ color: "var(--ink-light)" }}>人工总成本</p>
           <p className="text-xl font-bold mt-1" style={{ color: "var(--ink)" }}>¥{totalLaborCost.toFixed(2)}</p>
+        </div>
+        <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-4">
+          <p className="text-xs" style={{ color: "var(--ink-light)" }}>包装总成本</p>
+          <p className="text-xl font-bold mt-1" style={{ color: "var(--ink)" }}>¥{totalPackagingCost.toFixed(2)}</p>
         </div>
         <div className="bg-[var(--paper)] rounded-xl border border-[var(--border)] p-4">
           <p className="text-xs" style={{ color: "var(--ink-light)" }}>预计总收入</p>
@@ -199,9 +180,7 @@ export default function CostsClient({ list }: { list: Cost[] }) {
         <table className="w-full text-sm">
           <thead className="relative z-10">
             <tr style={{ background: "rgba(245,240,230,0.95)", color: "var(--ink-light)", position: "sticky", top: 0 }}>
-              {/* SKU - 需要 sticky left-0 */}
-              <th
-                className="text-left p-3 whitespace-nowrap sticky left-0 z-20 cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
+              <th className="text-left p-3 whitespace-nowrap sticky left-0 z-20 cursor-pointer select-none hover:bg-[rgba(180,83,9,0.08)]"
                 style={{ background: "rgba(245,240,230,0.95)", color: sortKey === "skuCode" ? "#b45309" : "var(--ink-light)" }}
                 onClick={() => toggleSort("skuCode")}
                 title="按SKU编码排序"
@@ -221,6 +200,7 @@ export default function CostsClient({ list }: { list: Cost[] }) {
               {renderSortTh("状态", "status")}
               {renderSortThRight("材料成本", "materialCost")}
               {renderSortThRight("人工成本", "laborCost")}
+              {renderSortThRight("包装成本", "packagingCost")}
               {renderSortThRight("总成本", "totalCost")}
               {renderSortThRight("售价", "price")}
               {renderSortThRight("单件毛利", "grossProfit")}
@@ -253,28 +233,39 @@ export default function CostsClient({ list }: { list: Cost[] }) {
                   <td className="p-3 text-right font-mono">¥{r.materialCost.toFixed(2)}</td>
                   <td
                     className="p-3 text-right font-mono cursor-pointer"
-                    onClick={() => { setEditingId(r.skuId); setLaborInput(String(r.laborCost)); }}
+                    onClick={() => { setEditingId(r.skuId); setLaborInput(String(r.laborCost)); setPackagingInput(String(r.packagingCost)); }}
                   >
                     {isEditing ? (
                       <span className="inline-flex items-center gap-1">
+                        <span className="text-xs" style={{ color: "var(--ink-light)" }}>人工</span>
                         <input
                           autoFocus
                           type="number"
                           min={0}
                           value={laborInput}
-                          onChange={e => setLaborInput(e.target.value)}
-                          onClick={e => e.stopPropagation()}
-                          className="w-16 px-1 py-0.5 text-right border rounded text-xs"
+                          onChange={(e) => setLaborInput(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-14 px-1 py-0.5 text-right border rounded text-xs"
+                          style={{ borderColor: "var(--jin)" }}
+                        />
+                        <span className="text-xs" style={{ color: "var(--ink-light)" }}>包装</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={packagingInput}
+                          onChange={(e) => setPackagingInput(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-14 px-1 py-0.5 text-right border rounded text-xs"
                           style={{ borderColor: "var(--jin)" }}
                         />
                         <button
                           disabled={saving}
-                          onClick={e => { e.stopPropagation(); saveLaborCost(r.skuId); }}
+                          onClick={(e) => { e.stopPropagation(); saveCost(r.skuId); }}
                           className="text-xs px-1.5 py-0.5 rounded text-white"
                           style={{ background: "var(--jin)" }}
                         >✓</button>
                         <button
-                          onClick={e => { e.stopPropagation(); setEditingId(null); }}
+                          onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
                           className="text-xs px-1.5 py-0.5 rounded"
                           style={{ background: "var(--border)" }}
                         >✕</button>
@@ -282,9 +273,18 @@ export default function CostsClient({ list }: { list: Cost[] }) {
                     ) : (
                       <span style={{ color: r.laborCost > 0 ? "var(--ink)" : "var(--ink-light)" }}>
                         ¥{r.laborCost.toFixed(2)}
-                        <span className="ml-1 text-xs opacity-40">✏</span>
+                        <span className="ml-1 text-xs opacity-40">✏️</span>
                       </span>
                     )}
+                  </td>
+                  <td
+                    className="p-3 text-right font-mono cursor-pointer"
+                    onClick={() => { setEditingId(r.skuId); setLaborInput(String(r.laborCost)); setPackagingInput(String(r.packagingCost)); }}
+                  >
+                    <span style={{ color: r.packagingCost > 0 ? "var(--ink)" : "var(--ink-light)" }}>
+                      ¥{r.packagingCost.toFixed(2)}
+                      <span className="ml-1 text-xs opacity-40">✏️</span>
+                    </span>
                   </td>
                   <td className="p-3 text-right font-mono font-medium">¥{r.totalCost.toFixed(2)}</td>
                   <td className="p-3 text-right font-mono" style={{ color: "var(--jin)" }}>¥{r.price.toFixed(2)}</td>
@@ -311,7 +311,7 @@ export default function CostsClient({ list }: { list: Cost[] }) {
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="p-6 text-center" style={{ color: "var(--ink-light)" }}>
+                <td colSpan={11} className="p-6 text-center" style={{ color: "var(--ink-light)" }}>
                   {searchQuery ? `未找到匹配"${searchQuery}"的SKU` : "暂无成本数据，请先在 BOM 模块录入材料用量"}
                 </td>
               </tr>

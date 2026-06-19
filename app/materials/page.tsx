@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { canViewCost } from "@/lib/permissions";
 import MaterialsClient from "./MaterialsClient";
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +22,12 @@ export default async function MaterialsPage({
   const { view } = await searchParams;
   const filter = view ? VIEW_FILTER[view] : undefined;
 
+  // 权限检查：material.view
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role;
+  const perms: string[] = (session?.user as any)?.permissions || [];
+  const showCost = canViewCost(role, perms);
+
   const where: any = {};
   if (filter?.materialType) {
     const types = filter.materialType.split(",").map((t) => t.trim()).filter(Boolean);
@@ -33,10 +41,15 @@ export default async function MaterialsPage({
     where.category = { contains: filter.category };
   }
 
-  const materials = await prisma.rawMaterial.findMany({
+  const rawMaterials = await prisma.rawMaterial.findMany({
     where,
     orderBy: { createdAt: "desc" },
   });
 
-  return <MaterialsClient materials={materials} activeView={view || ""} />;
+  // 非 Admin：隐藏材料单价和金额字段
+  const materials = showCost
+    ? rawMaterials
+    : rawMaterials.map((m) => ({ ...m, unitCost: null }));
+
+  return <MaterialsClient materials={materials} activeView={view || ""} showCost={showCost} />;
 }

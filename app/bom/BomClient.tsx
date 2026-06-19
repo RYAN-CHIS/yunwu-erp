@@ -30,7 +30,7 @@ interface Material {
   inventoryUnit: string;
 }
 
-export default function BomClient({ list: init, skus, materials }: { list: BomItem[]; skus: Sku[]; materials: Material[] }) {
+export default function BomClient({ list: init, skus, materials, showCost = true }: { list: BomItem[]; skus: Sku[]; materials: Material[]; showCost?: boolean }) {
   const [rows] = useState(init);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<BomItem | null>(null);
@@ -194,9 +194,11 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
                 <span className="ml-2 text-xs" style={{ color: "var(--ink-light)" }}>← {group.productName}</span>
               )}
             </div>
+            {showCost && (
             <span className="text-sm font-bold" style={{ color: "var(--zhu)" }}>
               合计：¥{group.totalCost.toFixed(2)}
             </span>
+            )}
           </div>
           <table className="w-full text-sm">
             <thead>
@@ -204,8 +206,8 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
                 {renderSortTh("材料编号", "materialCodeSnapshot")}
                 {renderSortTh("材料名称", "materialNameSnapshot")}
                 {renderSortThRight("用量", "quantity")}
-                {renderSortThRight("单位成本", "unitPrice")}
-                {renderSortThRight("行成本", "lineCost")}
+                {showCost && renderSortThRight("单位成本", "unitPrice")}
+                {showCost && renderSortThRight("行成本", "lineCost")}
                 <th className="text-center p-3">操作</th>
               </tr>
             </thead>
@@ -215,8 +217,8 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
                   <td className="p-3 font-mono text-xs">{r.materialCodeSnapshot}</td>
                   <td className="p-3">{r.materialNameSnapshot}</td>
                   <td className="p-3 text-right font-mono">{r.quantity}</td>
-                  <td className="p-3 text-right font-mono">¥{r.unitPrice?.toFixed(2) ?? "-"}</td>
-                  <td className="p-3 text-right font-mono font-medium" style={{ color: "var(--zhu)" }}>¥{r.lineCost?.toFixed(2) ?? "-"}</td>
+                  {showCost && <td className="p-3 text-right font-mono">¥{r.unitPrice?.toFixed(2) ?? "-"}</td>}
+                  {showCost && <td className="p-3 text-right font-mono font-medium" style={{ color: "var(--zhu)" }}>¥{r.lineCost?.toFixed(2) ?? "-"}</td>}
                   <td className="p-3">
                     <div className="flex justify-center gap-2">
                       <button onClick={() => openEdit(r)} className="p-1.5 rounded-md hover:bg-[rgba(180,83,9,0.08)]" style={{ color: "#b45309" }}>
@@ -288,7 +290,7 @@ export default function BomClient({ list: init, skus, materials }: { list: BomIt
               <option value="">请选择材料</option>
               {materials.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name}（{m.code}）· 单价¥{m.unitCost?.toFixed(2) ?? "0"}/{m.inventoryUnit}
+                  {m.name}（{m.code}）{showCost ? ` · 单价¥${m.unitCost?.toFixed(2) ?? "0"}` : ""}/{m.inventoryUnit}
                 </option>
               ))}
             </select>

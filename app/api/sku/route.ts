@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getSessionRole } from "@/lib/auth";
+import { maskSkusForRole } from "@/lib/permissions";
 
 /**
  * 获取 SKU 列表
+ * 非 Admin 角色：不返回成本、材料单价等数据
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -27,7 +30,11 @@ export async function GET(req: Request) {
     },
   });
 
-  return NextResponse.json(skus);
+  // 数据脱敏
+  const role = await getSessionRole();
+  const masked = maskSkusForRole(skus, role);
+
+  return NextResponse.json(masked);
 }
 
 /**

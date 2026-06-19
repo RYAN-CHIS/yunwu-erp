@@ -1,11 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 /**
  * 获取成本核算和利润分析
- * 自动关联 SKU 的价格和成本，计算利润
+ * 需要 cost.view 权限
  */
 export async function GET(req: Request) {
+  const auth = await requirePermission(PERMISSIONS.COST_VIEW);
+  if (auth instanceof Response) return auth;
+
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const seriesId = searchParams.get("seriesId");
@@ -62,6 +67,7 @@ export async function GET(req: Request) {
       storyFactor: sku.storyFactor ?? 1,
       materialCost: sku.cost?.materialCost ?? 0,
       laborCost: sku.cost?.laborCost ?? 0,
+      packagingCost: sku.cost?.packagingCost ?? 0,
     };
   });
 
@@ -69,10 +75,13 @@ export async function GET(req: Request) {
 }
 
 /**
- * 更新人工成本
- * 材料成本由 BOM 自动计算，这里只更新人工成本
+ * 更新人工成本和包装成本
+ * 仅 Admin 可访问
  */
 export async function POST(req: Request) {
+  const auth = await requirePermission(PERMISSIONS.COST_EDIT);
+  if (auth instanceof Response) return auth;
+
   try {
     const data = await req.json();
 
@@ -81,6 +90,7 @@ export async function POST(req: Request) {
     }
 
     const laborCost = data.laborCost ?? 0;
+    const packagingCost = data.packagingCost ?? 0;
 
     // 获取现有成本
     const existingCost = await prisma.productCost.findUnique({
@@ -94,12 +104,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // 更新人工成本并重新计算总成本
+    // 更新人工成本、包装成本并重新计算总成本
     const updatedCost = await prisma.productCost.update({
       where: { skuId: parseInt(data.skuId) },
       data: {
         laborCost,
-        totalCost: existingCost.materialCost + laborCost,
+        packagingCost,
+        totalCost: existingCost.materialCost + laborCost + packagingCost,
       },
     });
 

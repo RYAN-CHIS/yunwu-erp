@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getSessionRole } from "@/lib/auth";
+import { canViewCost } from "@/lib/permissions";
 
 /**
  * 获取 BOM 列表
+ * 非 Admin 角色：不返回材料 unitCost
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -19,6 +22,18 @@ export async function GET(req: Request) {
       material: { select: { code: true, name: true, unitCost: true } },
     },
   });
+
+  // 数据脱敏：非 Admin 隐藏材料单价和行成本
+  const role = await getSessionRole();
+  if (!canViewCost(role)) {
+    const masked = boms.map((bom) => ({
+      ...bom,
+      material: { code: bom.material.code, name: bom.material.name },
+      lineCost: undefined,
+      unitPrice: undefined,
+    }));
+    return NextResponse.json(masked);
+  }
 
   return NextResponse.json(boms);
 }

@@ -1,13 +1,59 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { prisma } from "@/lib/prisma";
+import {
+  PAGE_PERMISSION_MAP,
+  API_PERMISSION_MAP,
+  PERMISSIONS,
+} from "@/lib/permissions";
 
-// 使用 Node.js runtime 以支持 Prisma 数据库查询
 export const runtime = "nodejs";
+
+/** 判断路径是否匹配任一映射 key */
+function matchPathPrefix(
+  map: Record<string, any>,
+  pathname: string
+): { matched: boolean; key?: string; value?: any } {
+  const sorted = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const key of sorted) {
+    if (pathname.startsWith(key)) {
+      return { matched: true, key, value: map[key] };
+    }
+  }
+  return { matched: false };
+}
+
+/** 检查权限列表是否包含 SUPER_ADMIN */
+function isSuperAdmin(permissions: string[] | undefined): boolean {
+  return Array.isArray(permissions) && permissions.includes("super.admin");
+}
+
+/**
+ * V3: 计算实时有效权限
+ * 合并基础权限 + 未过期的临时权限
+ */
+function getEffectivePermissions(
+  basePermissions: string[],
+  tempPermissions: { code: string; expiresAt: string }[] | undefined
+): string[] {
+  const effective = new Set(basePermissions);
+  const now = Date.now();
+
+  // 合并未过期的临时权限
+  if (Array.isArray(tempPermissions)) {
+    for (const tp of tempPermissions) {
+      if (new Date(tp.expiresAt).getTime() > now) {
+        effective.add(tp.code);
+      }
+    }
+  }
+
+  return Array.from(effective);
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const method = request.method.toUpperCase();
 
   // Allow NextAuth API routes
   if (pathname.startsWith("/api/auth")) {
@@ -24,11 +70,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // Allow login, forgot-password, reset-password pages
-  if (pathname === "/login" || pathname === "/forgot-password" || pathname === "/reset-password") {
+  if (
+    pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password"
+  ) {
     return NextResponse.next();
   }
 
-  // Check authentication
+  // ─── 认证检查 ───
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
@@ -40,40 +90,56 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 验证用户是否仍然存在于数据库中
-  // 解决删除用户后已登录会话仍然有效的问题
-  if (token.id) {
-    try {
-      const userId = parseInt(token.id as string);
-      if (!isNaN(userId)) {
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { id: true },
-        });
+  const role = (token as any).role || "viewer";
+  const basePermissions: string[] = (token as any).permissions || [];
+  const tempPermissions: { code: string; expiresAt: string }[] = (token as any).tempPermissions || [];
 
-        if (!user) {
-          // 用户已被删除，清除会话并重定向到登录页
-          const loginUrl = new URL("/login", request.url);
-          const response = NextResponse.redirect(loginUrl);
+  // V3: 实时合并临时权限（自动过期检测）
+  const effectivePermissions = getEffectivePermissions(basePermissions, tempPermissions);
+  const superAdmin = isSuperAdmin(effectivePermissions) || role === "admin";
 
-          // 清除 NextAuth session cookie
-          response.cookies.set("next-auth.session-token", "", {
-            maxAge: 0,
-            path: "/",
-          });
-          response.cookies.set("__Secure-next-auth.session-token", "", {
-            maxAge: 0,
-            path: "/",
-          });
+  // ─── 页面路由权限检查 ───
+  const pageMatch = matchPathPrefix(PAGE_PERMISSION_MAP, pathname);
+  if (pageMatch.matched && pageMatch.key) {
+    const requiredPermission = pageMatch.value as string;
+    if (!superAdmin) {
+      if (!effectivePermissions.includes(requiredPermission)) {
+        const dashboardUrl = new URL("/dashboard", request.url);
+        dashboardUrl.searchParams.set("error", "permission_denied");
+        return NextResponse.redirect(dashboardUrl);
+      }
+    }
+  }
 
-          return response;
+  // ─── API 路由权限检查 ───
+  if (pathname.startsWith("/api/")) {
+    const apiMatch = matchPathPrefix(API_PERMISSION_MAP, pathname);
+    if (apiMatch.matched && apiMatch.value) {
+      const apiPerms = apiMatch.value as Record<string, string>;
+      const requiredPermission = apiPerms[method] || apiPerms["GET"];
+
+      if (requiredPermission && !superAdmin) {
+        if (!effectivePermissions.includes(requiredPermission)) {
+          return new NextResponse(
+            JSON.stringify({ error: `权限不足，需要 ${requiredPermission}` }),
+            {
+              status: 403,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
         }
       }
-    } catch (error) {
-      // 数据库查询失败时，为了安全起见仍然拒绝访问
-      console.error("Middleware user verification failed:", error);
-      const loginUrl = new URL("/login", request.url);
-      return NextResponse.redirect(loginUrl);
+    }
+
+    // Viewer 通用写保护
+    if (role === "viewer" && ["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
+      return new NextResponse(
+        JSON.stringify({ error: "权限不足，访客只读" }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
   }
 
@@ -81,13 +147,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - /api/auth/* (NextAuth API routes)
-     * - /_next/* (Next.js internals)
-     * - /favicon.*, /logo.* (static assets)
-     */
-    "/((?!api/auth|_next|favicon\\.svg|logo\\.png).*)",
-  ],
+  matcher: ["/((?!api/auth|_next|favicon\\.svg|logo\\.png).*)"],
 };
