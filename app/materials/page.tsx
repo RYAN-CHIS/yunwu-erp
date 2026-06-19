@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 const VIEW_FILTER: Record<string, { materialType?: string; category?: string }> = {
   bead: { materialType: "BEAD" },
   ceramic: { materialType: "CERAMIC" },
-  metal: { materialType: "METAL,CORD" },
+  metal: { category: "配件" },
   seal: { category: "印章" },
 };
 
