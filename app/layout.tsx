@@ -11,6 +11,9 @@ const notoSerif = Noto_Serif_SC({
   variable: "--font-serif-zh",
 });
 
+// 页面标题（浏览器标签页显示）
+const APP_TITLE = "允物 · 品牌经营系统";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={`h-full ${notoSerif.variable}`}>
       <head>
+        <title>{APP_TITLE}</title>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-full antialiased bg-[#f8f4ef] text-[#2c2c2c]">
