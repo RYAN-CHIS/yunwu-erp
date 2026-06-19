@@ -100,8 +100,8 @@ export default function Sidebar() {
         children: [
           { href: "/materials",            label: "全部材料", icon: "📦" },
           { href: "/materials?view=bead",   label: "珠子系统", icon: "🫧" },
-          { href: "/materials?view=ceramic",label: "瓷器系统", icon: "🏺" },
           { href: "/materials?view=metal",  label: "配件系统", icon: "⚙️" },
+          { href: "/materials?view=ceramic",label: "瓷器系统", icon: "🏺" },
           { href: "/materials?view=seal",   label: "印章系统", icon: "🔖" },
         ],
       },
