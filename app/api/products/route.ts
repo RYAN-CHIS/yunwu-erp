@@ -18,10 +18,11 @@ export async function GET(req: Request) {
 
   const products = await prisma.products.findMany({
     where,
-    orderBy: { createdAt: "desc" },
+    orderBy: { code: "asc" },
     include: {
       work: { include: { series: true } },
       skus: {
+        orderBy: { code: "asc" },
         include: { cost: true },
       },
     },
