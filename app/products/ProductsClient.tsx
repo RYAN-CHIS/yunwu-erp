@@ -152,11 +152,11 @@ export default function ProductsClient({ products: init, series, works }: { prod
               </button>
             )}
             <span className="w-px h-5 bg-[var(--border)]" />
-            <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-[7px] rounded-md text-sm border bg-white hover:bg-gray-50 transition-colors" style={{ borderColor: "var(--border)", color: "var(--ink)" }}>
-              <Download size={14} />导出
+            <button onClick={handleExport} className="px-2.5 py-[7px] rounded-md text-sm bg-white border hover:bg-gray-50 transition-colors" style={{ borderColor: "var(--border)", color: "var(--ink)" }}>
+              导出
             </button>
-            <button onClick={openNew} className="flex items-center gap-1.5 px-3 py-[7px] rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ background: "#b45309" }}>
-              <Plus size={14} />新增产品
+            <button onClick={openNew} className="px-2.5 py-[7px] rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ background: "#b45309" }}>
+              新增产品
             </button>
         </div>
       </div>
