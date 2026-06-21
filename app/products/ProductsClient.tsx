@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 
 interface Sku {
@@ -102,33 +102,41 @@ export default function ProductsClient({ products: init, series, works }: { prod
     <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>七序作品库</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+            {/* 搜索框 */}
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
               <input
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="搜索编码或名称…"
-                className="w-48 pl-9 pr-3 py-2 rounded-lg border text-sm"
+                className="w-44 pl-8 pr-7 py-[7px] rounded-md border text-sm bg-white"
                 style={{ borderColor: "var(--border)" }}
               />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(""); setCurrentPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100" style={{ color: "var(--ink-light)" }}>
+                  <X size={12} />
+                </button>
+              )}
             </div>
+            {/* 状态筛选 */}
             <select
               value={filterStatus}
               onChange={(e) => handleStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg border text-sm"
-              style={{ borderColor: "var(--border)", color: "var(--ink)" }}
+              className="px-2.5 py-[7px] rounded-md border text-sm bg-white"
+              style={{ borderColor: "var(--border)", color: filterStatus ? "var(--ink)" : "var(--ink-light)" }}
             >
               <option value="">全部状态</option>
               {Object.entries(statusMap).map(([k, v]) => (
                 <option key={k} value={k}>{v.label}</option>
               ))}
             </select>
+            {/* 系列筛选 */}
             <select
               value={filterSeries}
               onChange={(e) => handleSeriesFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg border text-sm"
-              style={{ borderColor: "var(--border)", color: "var(--ink)" }}
+              className="px-2.5 py-[7px] rounded-md border text-sm bg-white min-w-[100px]"
+              style={{ borderColor: "var(--border)", color: filterSeries ? "var(--ink)" : "var(--ink-light)" }}
             >
               <option value="">全部系列</option>
               {series.map((s) => (
@@ -138,18 +146,18 @@ export default function ProductsClient({ products: init, series, works }: { prod
             {(filterStatus || filterSeries || searchQuery) && (
               <button
                 onClick={() => { setSearchQuery(""); setFilterStatus(""); setFilterSeries(""); setCurrentPage(1); }}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border hover:bg-red-50"
-                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+                className="px-2.5 py-[7px] rounded-md text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 transition-colors"
               >
-                <Filter size={12} />清除筛选
+                重置
               </button>
             )}
-            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "var(--border)" }}>
-            <Download size={16} />导出
-          </button>
-          <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white" style={{ background: "#b45309" }}>
-            <Plus size={16} />新增产品
-          </button>
+            <span className="w-px h-5 bg-[var(--border)]" />
+            <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-[7px] rounded-md text-sm border bg-white hover:bg-gray-50 transition-colors" style={{ borderColor: "var(--border)", color: "var(--ink)" }}>
+              <Download size={14} />导出
+            </button>
+            <button onClick={openNew} className="flex items-center gap-1.5 px-3 py-[7px] rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ background: "#b45309" }}>
+              <Plus size={14} />新增产品
+            </button>
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-auto grid gap-4 content-start">
