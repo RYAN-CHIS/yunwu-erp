@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 
 interface Sku {
@@ -42,20 +42,27 @@ export default function ProductsClient({ products: init, series, works }: { prod
   const blank = { id: 0, code: "", name: "", workId: 0, status: "DRAFT", description: "" };
   const [form, setForm] = useState<typeof blank>({ ...blank });
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterSeries, setFilterSeries] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
 
-  const filtered = searchQuery
-    ? rows.filter((p) => {
-        const q = searchQuery.toLowerCase();
-        return p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q);
-      })
-    : rows;
+  const filtered = rows.filter((p) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!p.code.toLowerCase().includes(q) && !p.name.toLowerCase().includes(q)) return false;
+    }
+    if (filterStatus && p.status !== filterStatus) return false;
+    if (filterSeries && p.work?.series?.name !== filterSeries) return false;
+    return true;
+  });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   function handleSearch(q: string) { setSearchQuery(q); setCurrentPage(1); }
+  function handleStatusFilter(v: string) { setFilterStatus(v); setCurrentPage(1); }
+  function handleSeriesFilter(v: string) { setFilterSeries(v); setCurrentPage(1); }
 
   function openNew() {
     setEditing(null);
@@ -106,6 +113,37 @@ export default function ProductsClient({ products: init, series, works }: { prod
                 style={{ borderColor: "var(--border)" }}
               />
             </div>
+            <select
+              value={filterStatus}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+              className="px-3 py-2 rounded-lg border text-sm"
+              style={{ borderColor: "var(--border)", color: "var(--ink)" }}
+            >
+              <option value="">全部状态</option>
+              {Object.entries(statusMap).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+            <select
+              value={filterSeries}
+              onChange={(e) => handleSeriesFilter(e.target.value)}
+              className="px-3 py-2 rounded-lg border text-sm"
+              style={{ borderColor: "var(--border)", color: "var(--ink)" }}
+            >
+              <option value="">全部系列</option>
+              {series.map((s) => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
+            </select>
+            {(filterStatus || filterSeries || searchQuery) && (
+              <button
+                onClick={() => { setSearchQuery(""); setFilterStatus(""); setFilterSeries(""); setCurrentPage(1); }}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs border hover:bg-red-50"
+                style={{ borderColor: "#fca5a5", color: "#dc2626" }}
+              >
+                <Filter size={12} />清除筛选
+              </button>
+            )}
             <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "var(--border)" }}>
             <Download size={16} />导出
           </button>
@@ -115,7 +153,7 @@ export default function ProductsClient({ products: init, series, works }: { prod
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-auto grid gap-4 content-start">
-        {rows.map((p) => {
+        {paginated.map((p) => {
           const st = statusMap[p.status] ?? { label: p.status, color: "#78716c" };
           return (
             <div key={p.id} className="bg-[var(--paper)] border border-[var(--border)] rounded-xl p-5 hover:shadow-md transition">
@@ -156,7 +194,9 @@ export default function ProductsClient({ products: init, series, works }: { prod
         })}
         {filtered.length === 0 && (
           <p className="text-center py-8 text-sm" style={{ color: "var(--ink-light)" }}>
-            {searchQuery ? `未找到匹配"${searchQuery}"的产品` : "暂无作品，点击「新增产品」录入"}
+            {searchQuery || filterStatus || filterSeries
+              ? `未找到匹配条件的产品（${[searchQuery ? `"${searchQuery}"` : "", filterStatus ? statusMap[filterStatus]?.label : "", filterSeries ? `系列「${filterSeries}」` : ""].filter(Boolean).join(" + ")}）`
+              : "暂无作品，点击「新增产品」录入"}
           </p>
         )}
       </div>
