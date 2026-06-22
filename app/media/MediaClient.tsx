@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Image, Flag } from "lucide-react";
+import { Search, Plus, Image, Flag, AlertCircle } from "lucide-react";
 import MediaGrid from "./components/MediaGrid";
 import MediaUploader from "./components/MediaUploader";
 import MediaDetail from "./components/MediaDetail";
@@ -62,6 +62,7 @@ export function MediaClient() {
   const [showUploader, setShowUploader] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
+  const [blobEnabled, setBlobEnabled] = useState(true); // 默认 true，API 返回后更新
 
   const fetchMedia = useCallback(async () => {
     setLoading(true);
@@ -77,6 +78,7 @@ export function MediaClient() {
       const data = await res.json();
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
+      setBlobEnabled(data.blobEnabled ?? true);
     } catch (err) {
       console.error("加载媒体失败:", err);
     } finally {
@@ -139,9 +141,11 @@ export function MediaClient() {
 
           {activeTab === "media" && (
             <button
-              onClick={() => setShowUploader(true)}
-              className="flex items-center gap-1.5 px-3 py-[7px] rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90"
-              style={{ background: "#b45309" }}
+              onClick={() => blobEnabled && setShowUploader(true)}
+              disabled={!blobEnabled}
+              title={blobEnabled ? "上传文件" : "Blob 存储未配置，无法上传。请在 Vercel 项目设置中添加 BLOB_READ_WRITE_TOKEN 环境变量。"}
+              className={`flex items-center gap-1.5 px-3 py-[7px] rounded-md text-sm font-medium text-white transition-opacity ${blobEnabled ? "hover:opacity-90" : "opacity-50 cursor-not-allowed"}`}
+              style={{ background: blobEnabled ? "#b45309" : "#9ca3af" }}
             >
               <Plus size={14} />
               上传
@@ -149,6 +153,19 @@ export function MediaClient() {
           )}
         </div>
       </div>
+
+      {/* Blob 存储未配置警告 */}
+      {activeTab === "media" && !blobEnabled && (
+        <div className="flex items-center gap-3 px-6 py-3 border-b" style={{ background: "#fffbeb", borderColor: "#fcd34d" }}>
+          <AlertCircle size={18} style={{ color: "#d97706", flexShrink: 0 }} />
+          <div>
+            <p className="text-sm font-medium" style={{ color: "#92400e" }}>Blob 存储未配置 — 文件上传功能暂不可用</p>
+            <p className="text-xs mt-0.5" style={{ color: "#a16207" }}>
+              前往 <code className="px-1 py-0.5 rounded text-xs" style={{ background: "#fef3c7", color: "#92400e" }}>Vercel Dashboard → Settings → Environment Variables</code> 添加 <code className="px-1 py-0.5 rounded text-xs" style={{ background: "#fef3c7", color: "#92400e" }}>BLOB_READ_WRITE_TOKEN</code>，从 Storage → Blob Store 获取 Token 值，然后 Redeploy。
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Toolbar (media only) */}
       {activeTab === "media" && (
