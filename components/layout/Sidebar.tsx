@@ -18,6 +18,8 @@ import {
   Settings,
   ShoppingCart,
   ClipboardCheck,
+  Image as ImageIcon,
+  FileText,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -117,6 +119,16 @@ export default function Sidebar() {
         children: [
           { href: "/orders",  label: "订单管理", icon: "📋" },
           { href: "/customers", label: "客户管理", icon: "👤",  },
+        ],
+      },
+      {
+        href: "/media",
+        label: "展示管理",
+        icon: ImageIcon,
+        permission: "media.view",
+        children: [
+          { href: "/media",              label: "媒体中心", icon: "🖼️" },
+          { href: "/media?view=banners", label: "Banner",   icon: "🏴" },
         ],
       },
       { href: "/import",      label: "数据导入", icon: Upload,           permission: "import.data" },

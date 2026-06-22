@@ -402,3 +402,86 @@ enum PaymentStatus {
   PAID
   REFUNDED
 }
+
+// ═══════════════════════════════════════════
+// Brand OS V2 — 新增枚举
+// ═══════════════════════════════════════════
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+enum MediaCategory {
+  PRODUCT
+  WORK
+  BANNER
+  BRAND
+  ARTICLE
+  PAGE
+  OTHER
+}
+
+// ═══════════════════════════════════════════
+// 三、Brand OS V2 — 媒体中心 (Phase A)
+// ═══════════════════════════════════════════
+
+model MediaAsset {
+  id          Int           @id @default(autoincrement())
+  filename    String
+  originalName String       @map("original_name")
+  mimeType    String        @map("mime_type")
+  size        Int
+  url         String
+  thumbnailUrl String?      @map("thumbnail_url")
+  width       Int?
+  height      Int?
+  duration    Int?
+  mediaType   MediaType     @map("media_type")
+  category    MediaCategory
+  alt         String?
+  caption     String?
+  tags        String?
+  uploadedBy  Int?          @map("uploaded_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  banners     Banner[]
+  references  MediaReference[]
+
+  @@map("media_assets")
+}
+
+model MediaReference {
+  id         Int      @id @default(autoincrement())
+  mediaId    Int      @map("media_id")
+  media      MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  entityType String   @map("entity_type")   @db.VarChar(32)
+  entityId   Int      @map("entity_id")
+  fieldName  String   @map("field_name")    @db.VarChar(32)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([mediaId, entityType, entityId, fieldName])
+  @@index([entityType, entityId])
+  @@index([mediaId])
+  @@map("media_references")
+}
+
+model Banner {
+  id        Int        @id @default(autoincrement())
+  title     String
+  subtitle  String?
+  mediaId   Int        @map("media_id")
+  media     MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  linkUrl   String?    @map("link_url")
+  sortOrder Int        @default(0) @map("sort_order")
+  isActive  Boolean    @default(true) @map("is_active")
+  startAt   DateTime?  @map("start_at")
+  endAt     DateTime?  @map("end_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
