@@ -46,7 +46,7 @@ export async function uploadBlob(
   },
 ): Promise<BlobUploadResult> {
   if (!BLOB_ENABLED) {
-    throw new Error("Blob 存储未配置，请设置 BLOB_READ_WRITE_TOKEN");
+    throw new Error("Blob 存储未配置，请在 Vercel Dashboard → Settings → Environment Variables 中添加 BLOB_READ_WRITE_TOKEN 并 Redeploy");
   }
 
   const buffer = file instanceof File ? Buffer.from(await file.arrayBuffer()) : file;
