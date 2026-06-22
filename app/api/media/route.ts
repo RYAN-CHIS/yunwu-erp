@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getSessionUser, requireEditor } from "@/lib/auth";
-import { uploadBlob } from "@/lib/blob";
+import { uploadBlob, BLOB_ENABLED } from "@/lib/blob";
 import { MediaReferenceService } from "@/lib/media";
 
 /**
@@ -46,7 +46,13 @@ export async function GET(req: Request) {
     _refCount: refCounts.get(m.id) ?? 0,
   }));
 
-  return NextResponse.json({ items: list, total, page, pageSize });
+  return NextResponse.json({
+    items: list,
+    total,
+    page,
+    pageSize,
+    blobEnabled: BLOB_ENABLED,
+  });
 }
 
 /**
