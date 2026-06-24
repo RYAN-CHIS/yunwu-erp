@@ -24,6 +24,7 @@ export default function RootLayout({
       <head>
         <title>{APP_TITLE}</title>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <meta name="build-info" content="YWO_BUILD: product-os-v2.2-pdp / 73d6da0" />
       </head>
       <body className="min-h-full antialiased bg-[#f8f4ef] text-[#2c2c2c]">
         <SessionProvider>
