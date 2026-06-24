@@ -519,11 +519,11 @@ model Banner {
 
 model CtaConfig {
   id          Int      @id @default(autoincrement())
-  category    String   @unique    // explore | collection | purchase | cart | detail | order | search | contact
-  forbidden   String              // JSON array: 被禁止的电商文案
-  allowed     String              // JSON array: 允许的品牌文案
-  primary     String              // 首选文案
-  description String?             // 使用说明
+  category    String   @unique
+  forbidden   String
+  allowed     String
+  primary     String   @map("primary_text")
+  description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
