@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Download, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  Pencil, Trash2, Plus, Download, Search,
+  ChevronLeft, ChevronRight, X, Eye,
+  Send, CheckCircle, Globe, XCircle, RotateCcw, Archive,
+} from "lucide-react";
 import Modal from "@/components/ui/Modal";
 
 interface Sku {
@@ -19,15 +23,14 @@ interface Product {
   name: string;
   workId: number;
   status: string;
+  publishStatus?: string;
   description: string | null;
-  // 器物履历
   materialOrigin: string | null;
   craftMethod: string | null;
   completionDate: string | null;
   serialNumber: string | null;
   creationStory: string | null;
   emotionalState: string | null;
-  // 时间性缓存
   companionsCount: number;
   remainingQuantity: number | null;
   work?: { name: string; series?: { name: string } };
@@ -45,11 +48,50 @@ const statusMap: Record<string, { label: string; color: string }> = {
   ARCHIVED: { label: "已归档", color: "#a8a29e" },
 };
 
+const publishStatusMap: Record<string, { label: string; color: string; icon: any }> = {
+  DRAFT: { label: "草稿", color: "#78716c", icon: RotateCcw },
+  PENDING_REVIEW: { label: "待审核", color: "#d97706", icon: Send },
+  APPROVED: { label: "已批准", color: "#2563eb", icon: CheckCircle },
+  PUBLISHED: { label: "已发布", color: "#16a34a", icon: Globe },
+  UNPUBLISHED: { label: "已下架", color: "#ea580c", icon: XCircle },
+  ARCHIVED: { label: "已归档", color: "#a8a29e", icon: Archive },
+};
+
+const publishFilterOpts = [
+  { value: "", label: "全部发布状态" },
+  ...Object.entries(publishStatusMap).map(([k, v]) => ({ value: k, label: v.label })),
+];
+
+/** 当前发布状态下可用的操作按钮 */
+function getPublishActions(status?: string): { action: string; label: string; icon: any; color: string }[] {
+  switch (status) {
+    case "DRAFT":
+      return [{ action: "submit_review", label: "提交审核", icon: Send, color: "#d97706" }];
+    case "PENDING_REVIEW":
+      return [
+        { action: "approve", label: "审核通过", icon: CheckCircle, color: "#2563eb" },
+        { action: "return_to_draft", label: "退回草稿", icon: RotateCcw, color: "#78716c" },
+      ];
+    case "APPROVED":
+      return [      { action: "publish", label: "发布", icon: Globe, color: "#16a34a" }];
+    case "PUBLISHED":
+      return [{ action: "unpublish", label: "下架", icon: XCircle, color: "#ea580c" }];
+    case "UNPUBLISHED":
+      return [
+        { action: "publish", label: "重新发布", icon: Globe, color: "#16a34a" },
+        { action: "return_to_draft", label: "退回草稿", icon: RotateCcw, color: "#78716c" },
+      ];
+    default:
+      return [];
+  }
+}
+
 export default function ProductsClient({ products: init, series, works }: { products: Product[]; series: Series[]; works: Work[] }) {
   const [rows] = useState(init);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const blank = { 
+  const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
+  const blank = {
     id: 0, code: "", name: "", workId: 0, status: "DRAFT", description: "",
     materialOrigin: "", craftMethod: "", completionDate: "", serialNumber: "",
     creationStory: "", emotionalState: "", companionsCount: 0, remainingQuantity: null as number | null,
@@ -57,6 +99,7 @@ export default function ProductsClient({ products: init, series, works }: { prod
   const [form, setForm] = useState<typeof blank>({ ...blank });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterPublishStatus, setFilterPublishStatus] = useState<string>("");
   const [filterSeries, setFilterSeries] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
@@ -67,6 +110,7 @@ export default function ProductsClient({ products: init, series, works }: { prod
       if (!p.code.toLowerCase().includes(q) && !p.name.toLowerCase().includes(q)) return false;
     }
     if (filterStatus && p.status !== filterStatus) return false;
+    if (filterPublishStatus && p.publishStatus !== filterPublishStatus) return false;
     if (filterSeries && p.work?.series?.name !== filterSeries) return false;
     return true;
   });
@@ -76,6 +120,7 @@ export default function ProductsClient({ products: init, series, works }: { prod
 
   function handleSearch(q: string) { setSearchQuery(q); setCurrentPage(1); }
   function handleStatusFilter(v: string) { setFilterStatus(v); setCurrentPage(1); }
+  function handlePublishFilter(v: string) { setFilterPublishStatus(v); setCurrentPage(1); }
   function handleSeriesFilter(v: string) { setFilterSeries(v); setCurrentPage(1); }
 
   function openNew() {
@@ -86,7 +131,7 @@ export default function ProductsClient({ products: init, series, works }: { prod
   function handleExport() { window.open("/api/export?type=products", "_blank"); }
   function openEdit(p: Product) {
     setEditing(p);
-    setForm({ 
+    setForm({
       id: p.id, code: p.code, name: p.name, workId: p.workId, status: p.status, description: p.description ?? "",
       materialOrigin: p.materialOrigin ?? "", craftMethod: p.craftMethod ?? "",
       completionDate: p.completionDate ?? "", serialNumber: p.serialNumber ?? "",
@@ -104,14 +149,12 @@ export default function ProductsClient({ products: init, series, works }: { prod
       workId: Number(fd.get("workId")),
       status: String(fd.get("status")),
       description: String(fd.get("description") || ""),
-      // 器物履历
       materialOrigin: String(fd.get("materialOrigin") || ""),
       craftMethod: String(fd.get("craftMethod") || ""),
       completionDate: String(fd.get("completionDate") || ""),
       serialNumber: String(fd.get("serialNumber") || ""),
       creationStory: String(fd.get("creationStory") || ""),
       emotionalState: String(fd.get("emotionalState") || ""),
-      // 时间性缓存
       companionsCount: Number(fd.get("companionsCount")) || 0,
       remainingQuantity: fd.get("remainingQuantity") ? Number(fd.get("remainingQuantity")) : null,
     };
@@ -128,78 +171,119 @@ export default function ProductsClient({ products: init, series, works }: { prod
     location.reload();
   }
 
+  async function handlePublish(productId: number, action: string) {
+    setBusyIds((prev) => new Set(prev).add(productId));
+    try {
+      const res = await fetch("/api/products/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: productId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "操作失败");
+      } else {
+        location.reload();
+      }
+    } catch (e: any) {
+      alert(e.message || "网络错误");
+    } finally {
+      setBusyIds((prev) => {
+        const next = new Set(prev);
+        next.delete(productId);
+        return next;
+      });
+    }
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-68px)] p-6 gap-4">
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>七序作品库</h1>
         <div className="flex items-center gap-2.5">
-            {/* 搜索框 */}
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
-              <input
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                placeholder="搜索编码或名称…"
-                className="w-44 pl-8 pr-7 py-[7px] rounded-md border text-sm bg-white"
-                style={{ borderColor: "var(--border)" }}
-              />
-              {searchQuery && (
-                <button onClick={() => { setSearchQuery(""); setCurrentPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100" style={{ color: "var(--ink-light)" }}>
-                  <X size={12} />
-                </button>
-              )}
-            </div>
-            {/* 状态筛选 */}
-            <select
-              value={filterStatus}
-              onChange={(e) => handleStatusFilter(e.target.value)}
-              className="px-2.5 py-[7px] rounded-md border text-sm bg-white"
-              style={{ borderColor: "var(--border)", color: filterStatus ? "var(--ink)" : "var(--ink-light)" }}
-            >
-              <option value="">全部状态</option>
-              {Object.entries(statusMap).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </select>
-            {/* 系列筛选 */}
-            <select
-              value={filterSeries}
-              onChange={(e) => handleSeriesFilter(e.target.value)}
-              className="px-2.5 py-[7px] rounded-md border text-sm bg-white min-w-[100px]"
-              style={{ borderColor: "var(--border)", color: filterSeries ? "var(--ink)" : "var(--ink-light)" }}
-            >
-              <option value="">全部系列</option>
-              {series.map((s) => (
-                <option key={s.id} value={s.name}>{s.name}</option>
-              ))}
-            </select>
-            {(filterStatus || filterSeries || searchQuery) && (
-              <button
-                onClick={() => { setSearchQuery(""); setFilterStatus(""); setFilterSeries(""); setCurrentPage(1); }}
-                className="px-2.5 py-[7px] rounded-md text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 transition-colors"
-              >
-                重置
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-light)" }} />
+            <input
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="搜索编码或名称…"
+              className="w-44 pl-8 pr-7 py-[7px] rounded-md border text-sm bg-white"
+              style={{ borderColor: "var(--border)" }}
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setCurrentPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100" style={{ color: "var(--ink-light)" }}>
+                <X size={12} />
               </button>
             )}
-            <span className="w-px h-5 bg-[var(--border)]" />
-            <button onClick={handleExport} className="px-2.5 py-[7px] rounded-md text-sm bg-white border hover:bg-gray-50 transition-colors" style={{ borderColor: "var(--border)", color: "var(--ink)" }}>
-              导出
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => handleStatusFilter(e.target.value)}
+            className="px-2.5 py-[7px] rounded-md border text-sm bg-white"
+            style={{ borderColor: "var(--border)", color: filterStatus ? "var(--ink)" : "var(--ink-light)" }}
+          >
+            <option value="">全部状态</option>
+            {Object.entries(statusMap).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </select>
+          <select
+            value={filterPublishStatus}
+            onChange={(e) => handlePublishFilter(e.target.value)}
+            className="px-2.5 py-[7px] rounded-md border text-sm bg-white"
+            style={{ borderColor: "var(--border)", color: filterPublishStatus ? "var(--ink)" : "var(--ink-light)" }}
+          >
+            {publishFilterOpts.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <select
+            value={filterSeries}
+            onChange={(e) => handleSeriesFilter(e.target.value)}
+            className="px-2.5 py-[7px] rounded-md border text-sm bg-white min-w-[100px]"
+            style={{ borderColor: "var(--border)", color: filterSeries ? "var(--ink)" : "var(--ink-light)" }}
+          >
+            <option value="">全部系列</option>
+            {series.map((s) => (
+              <option key={s.id} value={s.name}>{s.name}</option>
+            ))}
+          </select>
+          {(filterStatus || filterPublishStatus || filterSeries || searchQuery) && (
+            <button
+              onClick={() => { setSearchQuery(""); setFilterStatus(""); setFilterPublishStatus(""); setFilterSeries(""); setCurrentPage(1); }}
+              className="px-2.5 py-[7px] rounded-md text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 transition-colors"
+            >
+              重置
             </button>
-            <button onClick={openNew} className="px-2.5 py-[7px] rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ background: "#b45309" }}>
-              新增产品
-            </button>
+          )}
+          <span className="w-px h-5 bg-[var(--border)]" />
+          <button onClick={handleExport} className="px-2.5 py-[7px] rounded-md text-sm bg-white border hover:bg-gray-50 transition-colors" style={{ borderColor: "var(--border)", color: "var(--ink)" }}>
+            导出
+          </button>
+          <button onClick={openNew} className="px-2.5 py-[7px] rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ background: "#b45309" }}>
+            新增产品
+          </button>
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-auto grid gap-4 content-start">
         {paginated.map((p) => {
           const st = statusMap[p.status] ?? { label: p.status, color: "#78716c" };
+          const ps = publishStatusMap[p.publishStatus ?? ""] || null;
+          const actions = getPublishActions(p.publishStatus);
+          const isBusy = busyIds.has(p.id);
           return (
             <div key={p.id} className="bg-[var(--paper)] border border-[var(--border)] rounded-xl p-5 hover:shadow-md transition">
               <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-[rgba(245,240,230,0.8)]" style={{ color: "var(--ink-light)" }}>{p.code}</span>
-                    <p className="font-semibold" style={{ color: "var(--ink)" }}>{p.name}</p>
+                    <p className="font-semibold truncate" style={{ color: "var(--ink)" }}>{p.name}</p>
+                    {ps && (
+                      <span className="text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: `${ps.color}15`, color: ps.color }}>
+                        <ps.icon size={11} />
+                        {ps.label}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs mt-1" style={{ color: "var(--ink-light)" }}>
                     {p.work?.series?.name} · {p.work?.name}
@@ -208,8 +292,27 @@ export default function ProductsClient({ products: init, series, works }: { prod
                     <p className="text-xs mt-1 line-clamp-2" style={{ color: "var(--ink-light)" }}>{p.description}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                  {/* 发布操作按钮组 */}
+                  {actions.length > 0 && actions.map((a) => (
+                    <button
+                      key={a.action}
+                      onClick={() => handlePublish(p.id, a.action)}
+                      disabled={isBusy}
+                      title={a.label}
+                      className="p-1.5 rounded-md hover:bg-[rgba(0,0,0,0.04)] disabled:opacity-40"
+                      style={{ color: a.color }}
+                    >
+                      <a.icon size={14} />
+                    </button>
+                  ))}
                   <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${st.color}15`, color: st.color }}>{st.label}</span>
+                  <a href={`/products/${p.code}`} target="_blank" rel="noopener noreferrer"
+                    className="p-1.5 rounded-md hover:bg-[rgba(0,0,0,0.04)]"
+                    style={{ color: "var(--ink-light)" }}
+                    title="PDP 预览">
+                    <Eye size={14} />
+                  </a>
                   <button onClick={() => openEdit(p)} className="p-1.5 rounded-md hover:bg-[rgba(185,28,28,0.08)]" style={{ color: "var(--zhu)" }}>
                     <Pencil size={14} />
                   </button>
@@ -232,8 +335,8 @@ export default function ProductsClient({ products: init, series, works }: { prod
         })}
         {filtered.length === 0 && (
           <p className="text-center py-8 text-sm" style={{ color: "var(--ink-light)" }}>
-            {searchQuery || filterStatus || filterSeries
-              ? `未找到匹配条件的产品（${[searchQuery ? `"${searchQuery}"` : "", filterStatus ? statusMap[filterStatus]?.label : "", filterSeries ? `系列「${filterSeries}」` : ""].filter(Boolean).join(" + ")}）`
+            {searchQuery || filterStatus || filterPublishStatus || filterSeries
+              ? "未找到匹配条件的产品"
               : "暂无作品，点击「新增产品」录入"}
           </p>
         )}
@@ -280,7 +383,6 @@ export default function ProductsClient({ products: init, series, works }: { prod
             <textarea name="description" defaultValue={form.description} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
           </label>
 
-          {/* ── 器物履历（V2.1 新增）── */}
           <div className="pt-2 border-t" style={{ borderColor: "var(--border)" }}>
             <p className="text-xs font-medium mb-3" style={{ color: "var(--ink)" }}>器物履历</p>
             <div className="grid grid-cols-2 gap-3">
@@ -311,7 +413,6 @@ export default function ProductsClient({ products: init, series, works }: { prod
             </label>
           </div>
 
-          {/* ── 时间性数据（V2.1 新增）── */}
           <div className="pt-2 border-t" style={{ borderColor: "var(--border)" }}>
             <p className="text-xs font-medium mb-3" style={{ color: "var(--ink)" }}>时间性展示数据</p>
             <div className="grid grid-cols-2 gap-3">
