@@ -129,6 +129,7 @@ export default function Sidebar() {
         children: [
           { href: "/media",              label: "媒体中心", icon: "🖼️" },
           { href: "/media?view=banners", label: "Banner",   icon: "🏴" },
+          { href: "/home-sections",      label: "首页结构", icon: "🏠" },
         ],
       },
       { href: "/import",      label: "数据导入", icon: Upload,           permission: "import.data" },

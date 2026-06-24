@@ -20,6 +20,16 @@ interface Product {
   workId: number;
   status: string;
   description: string | null;
+  // 器物履历
+  materialOrigin: string | null;
+  craftMethod: string | null;
+  completionDate: string | null;
+  serialNumber: string | null;
+  creationStory: string | null;
+  emotionalState: string | null;
+  // 时间性缓存
+  companionsCount: number;
+  remainingQuantity: number | null;
   work?: { name: string; series?: { name: string } };
   skus?: Sku[];
 }
@@ -39,7 +49,11 @@ export default function ProductsClient({ products: init, series, works }: { prod
   const [rows] = useState(init);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const blank = { id: 0, code: "", name: "", workId: 0, status: "DRAFT", description: "" };
+  const blank = { 
+    id: 0, code: "", name: "", workId: 0, status: "DRAFT", description: "",
+    materialOrigin: "", craftMethod: "", completionDate: "", serialNumber: "",
+    creationStory: "", emotionalState: "", companionsCount: 0, remainingQuantity: null as number | null,
+  };
   const [form, setForm] = useState<typeof blank>({ ...blank });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
@@ -72,7 +86,13 @@ export default function ProductsClient({ products: init, series, works }: { prod
   function handleExport() { window.open("/api/export?type=products", "_blank"); }
   function openEdit(p: Product) {
     setEditing(p);
-    setForm({ id: p.id, code: p.code, name: p.name, workId: p.workId, status: p.status, description: p.description ?? "" });
+    setForm({ 
+      id: p.id, code: p.code, name: p.name, workId: p.workId, status: p.status, description: p.description ?? "",
+      materialOrigin: p.materialOrigin ?? "", craftMethod: p.craftMethod ?? "",
+      completionDate: p.completionDate ?? "", serialNumber: p.serialNumber ?? "",
+      creationStory: p.creationStory ?? "", emotionalState: p.emotionalState ?? "",
+      companionsCount: p.companionsCount ?? 0, remainingQuantity: p.remainingQuantity ?? null,
+    });
     setOpen(true);
   }
   async function save(e: React.FormEvent) {
@@ -84,6 +104,16 @@ export default function ProductsClient({ products: init, series, works }: { prod
       workId: Number(fd.get("workId")),
       status: String(fd.get("status")),
       description: String(fd.get("description") || ""),
+      // 器物履历
+      materialOrigin: String(fd.get("materialOrigin") || ""),
+      craftMethod: String(fd.get("craftMethod") || ""),
+      completionDate: String(fd.get("completionDate") || ""),
+      serialNumber: String(fd.get("serialNumber") || ""),
+      creationStory: String(fd.get("creationStory") || ""),
+      emotionalState: String(fd.get("emotionalState") || ""),
+      // 时间性缓存
+      companionsCount: Number(fd.get("companionsCount")) || 0,
+      remainingQuantity: fd.get("remainingQuantity") ? Number(fd.get("remainingQuantity")) : null,
     };
     await fetch(editing ? `/api/products/${editing.id}` : "/api/products", {
       method: editing ? "PUT" : "POST",
@@ -249,6 +279,53 @@ export default function ProductsClient({ products: init, series, works }: { prod
             <span className="text-xs" style={{ color: "var(--ink-light)" }}>描述</span>
             <textarea name="description" defaultValue={form.description} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
           </label>
+
+          {/* ── 器物履历（V2.1 新增）── */}
+          <div className="pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+            <p className="text-xs font-medium mb-3" style={{ color: "var(--ink)" }}>器物履历</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="space-y-1">
+                <span className="text-xs" style={{ color: "var(--ink-light)" }}>材质来源</span>
+                <input name="materialOrigin" defaultValue={form.materialOrigin} placeholder="如：景德镇高岭土" className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs" style={{ color: "var(--ink-light)" }}>工艺方式</span>
+                <input name="craftMethod" defaultValue={form.craftMethod} placeholder="如：手工拉坯" className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs" style={{ color: "var(--ink-light)" }}>完成时间</span>
+                <input name="completionDate" type="date" defaultValue={form.completionDate} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs" style={{ color: "var(--ink-light)" }}>编号序列</span>
+                <input name="serialNumber" defaultValue={form.serialNumber} placeholder="如：YW-2026-001" className="w-full border rounded-lg px-3 py-2 text-sm font-mono" style={{ borderColor: "var(--border)" }} />
+              </label>
+            </div>
+            <label className="space-y-1 mt-3">
+              <span className="text-xs" style={{ color: "var(--ink-light)" }}>创作缘起</span>
+              <textarea name="creationStory" defaultValue={form.creationStory} rows={2} placeholder="这件作品因何而生…" className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+            </label>
+            <label className="space-y-1 mt-3">
+              <span className="text-xs" style={{ color: "var(--ink-light)" }}>适配心境</span>
+              <input name="emotionalState" defaultValue={form.emotionalState} placeholder="如：独处沉思 / 静心凝神" className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+            </label>
+          </div>
+
+          {/* ── 时间性数据（V2.1 新增）── */}
+          <div className="pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+            <p className="text-xs font-medium mb-3" style={{ color: "var(--ink)" }}>时间性展示数据</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="space-y-1">
+                <span className="text-xs" style={{ color: "var(--ink-light)" }}>已陪伴人数（缓存）</span>
+                <input name="companionsCount" type="number" min="0" defaultValue={String(form.companionsCount)} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs" style={{ color: "var(--ink-light)" }}>剩余数量（缓存）</span>
+                <input name="remainingQuantity" type="number" min="0" defaultValue={form.remainingQuantity != null ? String(form.remainingQuantity) : ""} className="w-full border rounded-lg px-3 py-2 text-sm" style={{ borderColor: "var(--border)" }} />
+              </label>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "var(--border)" }}>取消</button>
             <button type="submit" className="px-4 py-2 rounded-lg text-sm text-white" style={{ background: "#b45309" }}>保存</button>

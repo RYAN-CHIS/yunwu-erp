@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { onOrderCompleted } from "@/lib/cache-sync";
 
 /** 生成订单编号: YW-20260618-0001 */
 function generateOrderNo(lastId: number): string {
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
     const {
       customerId,
       channel,
+      status,
       items,
       subtotal,
       discount,
@@ -130,6 +132,7 @@ export async function POST(req: NextRequest) {
         orderNo,
         customerId,
         channel: channel || "MANUAL",
+        status: status || "PENDING",
         items: JSON.stringify(items),
         subtotal: subtotal || 0,
         discount: discount || 0,
@@ -147,6 +150,11 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // 如果订单创建时即为 COMPLETED，触发缓存同步
+    if ((body.status || "").toUpperCase() === "COMPLETED") {
+      onOrderCompleted(order.id).catch((e) => console.error("缓存同步失败:", e));
+    }
 
     return NextResponse.json({ success: true, order }, { status: 201 });
   } catch (error) {

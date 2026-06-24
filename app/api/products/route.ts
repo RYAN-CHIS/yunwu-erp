@@ -62,6 +62,16 @@ export async function POST(req: Request) {
         workId: parseInt(data.workId),
         status: data.status ?? "DESIGNING",
         description: data.description ?? "",
+        // 器物履历字段
+        materialOrigin: data.materialOrigin ?? null,
+        craftMethod: data.craftMethod ?? null,
+        completionDate: data.completionDate ? new Date(data.completionDate) : null,
+        serialNumber: data.serialNumber ?? null,
+        creationStory: data.creationStory ?? null,
+        emotionalState: data.emotionalState ?? null,
+        // 时间性缓存字段
+        companionsCount: data.companionsCount ?? 0,
+        remainingQuantity: data.remainingQuantity ?? null,
       },
     });
 

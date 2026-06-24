@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { onOrderCompleted, onOrderCancelled } from "@/lib/cache-sync";
 
 // GET /api/orders/[id] — 获取订单详情
 export async function GET(
@@ -96,6 +97,12 @@ export async function PUT(
     if (shippingAddress !== undefined) updateData.shippingAddress = shippingAddress ? JSON.stringify(shippingAddress) : null;
     if (notes !== undefined) updateData.notes = notes;
 
+    // 先获取旧状态用于缓存同步判断
+    const oldOrder = status ? await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { status: true },
+    }) : null;
+
     const order = await prisma.order.update({
       where: { id: orderId },
       data: updateData,
@@ -105,6 +112,16 @@ export async function PUT(
         },
       },
     });
+
+    // 状态变更缓存同步（V2.1）
+    const newStatus = (status || "").toUpperCase();
+    if (oldOrder && newStatus) {
+      if (newStatus === "COMPLETED" && oldOrder.status !== "COMPLETED") {
+        onOrderCompleted(orderId).catch((e) => console.error("COMPLETE 缓存同步失败:", e));
+      } else if ((newStatus === "CANCELLED" || newStatus === "REFUNDED") && oldOrder.status === "COMPLETED") {
+        onOrderCancelled(orderId).catch((e) => console.error("CANCEL 缓存同步失败:", e));
+      }
+    }
 
     return NextResponse.json({ success: true, order });
   } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { X, Upload, Image as ImageIcon } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Info } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -109,6 +109,22 @@ export default function MediaUploader({ onClose, onUploaded }: Props) {
               className="hidden"
               onChange={(e) => e.target.files && handleFiles(e.target.files)}
             />
+          </div>
+
+          {/* 图片上传规范提示 */}
+          <div className="rounded-lg p-3 border" style={{ background: "#fffbeb", borderColor: "#fcd34d" }}>
+            <div className="flex items-start gap-2">
+              <Info size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: 1 }} />
+              <div>
+                <p className="text-xs font-medium mb-1" style={{ color: "#92400e" }}>器物图片上传规范</p>
+                <ul className="text-xs space-y-0.5" style={{ color: "#a16207" }}>
+                  <li>· 自然光拍摄，避免人造光源</li>
+                  <li>· 低饱和度，保留材质颗粒感</li>
+                  <li>· 禁止纯白背景，使用自然场景</li>
+                  <li>· 禁止过度锐化、高对比处理</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* File previews */}
