@@ -71,15 +71,14 @@ body > div[class*="fixed"] {
 /* ── 统计卡片 ── */
 .stat-card {
   background: var(--bg-card);
-  border-radius: 10px;
+  border-radius: 2px;
   border: 1px solid var(--border-light);
   padding: 1.25rem 1.4rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  transition: opacity 0.28s ease;     /* V2.1：仅 opacity，禁止 scale/translateY */
 }
 .stat-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-  transform: translateY(-1px);
+  opacity: 0.88;                       /* V2.1：器物渐隐，不跳起 */
 }
 .stat-card .stat-label {
   font-size: 0.78rem;
@@ -104,9 +103,8 @@ body > div[class*="fixed"] {
   font-size: 0.875rem;
   border-collapse: collapse;
   background: var(--bg-card);
-  border-radius: 10px;
+  border-radius: 2px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .data-table th {
@@ -144,7 +142,7 @@ body > div[class*="fixed"] {
   color: var(--bg-xuan);
   border: 1px solid var(--ink-primary);
   padding: 7px 18px;
-  border-radius: 7px;
+  border-radius: 2px;      /* V2.1：器物边缘感 */
   font-size: 0.835rem;
   font-weight: 500;
   cursor: pointer;
@@ -155,7 +153,6 @@ body > div[class*="fixed"] {
 .btn-primary:hover {
   background: #2c2c2c;
   border-color: #2c2c2c;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
 .btn-secondary {
@@ -163,7 +160,7 @@ body > div[class*="fixed"] {
   color: var(--ink-primary);
   border: 1px solid var(--border-med);
   padding: 7px 18px;
-  border-radius: 7px;
+  border-radius: 2px;      /* V2.1：器物边缘感 */
   font-size: 0.835rem;
   font-weight: 500;
   cursor: pointer;
@@ -180,7 +177,7 @@ body > div[class*="fixed"] {
   color: var(--ink-secondary);
   border: 1px solid transparent;
   padding: 3px 10px;
-  border-radius: 5px;
+  border-radius: 2px;      /* V2.1：器物边缘感 */
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.12s ease;
@@ -196,7 +193,7 @@ body > div[class*="fixed"] {
   color: var(--func-red-text);
   border: 1px solid #fecaca;
   padding: 3px 10px;
-  border-radius: 5px;
+  border-radius: 2px;      /* V2.1：器物边缘感 */
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.12s ease;
@@ -226,15 +223,17 @@ body > div[class*="fixed"] {
 /* ── 卡片（七序作品库） ── */
 .product-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 10px;
+  border-top: 1px solid var(--border-light);   /* V2.1：仅上边框，器物承载体 */
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0;                             /* V2.1：无圆角 */
   padding: 1rem 1.2rem;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  transition: opacity 0.28s ease;               /* V2.1：仅 opacity */
   position: relative;
 }
 .product-card:hover {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-  transform: translateY(-1px);
+  opacity: 0.88;                                /* V2.1：器物渐隐 */
 }
 
 /* ── 七序左边框色 ── */
@@ -247,11 +246,10 @@ body > div[class*="fixed"] {
 .seq-border-藏真 { border-left: 3px solid var(--seq-藏真); }
 
 /* ── Modal 遮罩 ── */
+/* V2.1：移除 backdrop-filter（宪章禁则：禁止毛玻璃科技感） */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(28,25,23, 0.35);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex; align-items: center; justify-content: center;
 }
@@ -281,7 +279,7 @@ textarea {
   font-size: 0.855rem;
   padding: 7px 10px;
   border: 1px solid var(--border-med);
-  border-radius: 7px;
+  border-radius: 2px;
   background: var(--bg-card);
   color: var(--ink-primary);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -290,14 +288,14 @@ textarea {
 }
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--accent-red);
-  box-shadow: 0 0 0 3px rgba(185,28,28,0.08);
+  border-color: #C8A972;              /* V2.1：土黄品牌色，替代朱砂 */
+  box-shadow: none;                    /* V2.1：禁止 box-shadow ring */
 }
 
 /* ── 标题 ── */
 h1, h2, h3 {
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 400;         /* V2.1：避免中文发虚 */
+  letter-spacing: 0.03em;   /* V2.1：自然呼吸感 */
 }
 h2 { font-size: 1.2rem; color: var(--ink-primary); }
 h3 { font-size: 0.95rem; color: var(--ink-secondary); font-weight: 500; }
@@ -309,9 +307,10 @@ h3 { font-size: 0.95rem; color: var(--ink-secondary); font-weight: 500; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }
 
 /* ── 页面渐入动画 ── */
+/* V2.1：移除 translateY，器物不跳起 */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .page-container > * {
   animation: fadeUp 0.3s ease both;

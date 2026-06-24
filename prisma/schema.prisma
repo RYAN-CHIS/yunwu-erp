@@ -143,11 +143,25 @@ model Works {
   name      String
   seriesId  Int             @map("series_id")
   status    LifecycleStatus @default(DESIGNING)
+
+  // ── V2.1 器物履历字段 ──
+  materialOrigin   String?   @map("material_origin")    // 材质来源
+  craftMethod      String?   @map("craft_method")        // 工艺方式
+  completionDate   DateTime? @map("completion_date")     // 完成时间
+  serialNumber     String?   @map("serial_number")       // 编号序列
+  creationStory    String?   @map("creation_story")      // 创作缘起
+  emotionalState   String?   @map("emotional_state")     // 适配心境
+
+  // ── V2.1 时间性缓存 ──
+  companionsCount  Int       @default(0) @map("companions_count") // 已陪伴同行者
+  remainingQty     Int?      @map("remaining_qty")       // 此批尚余（null=不限量）
+
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
   products  Products[]
   series    Series          @relation(fields: [seriesId], references: [id])
   assets    WorksAssets?
+  homeSections HomeSection[]
 
   @@map("works")
 }
@@ -174,6 +188,19 @@ model Products {
   workId      Int             @map("work_id")
   status      LifecycleStatus @default(DESIGNING)
   description String?
+
+  // ── V2.1 器物履历字段 ──
+  materialOrigin   String?   @map("material_origin")
+  craftMethod      String?   @map("craft_method")
+  completionDate   DateTime? @map("completion_date")
+  serialNumber     String?   @map("serial_number")
+  creationStory    String?   @map("creation_story")
+  emotionalState   String?   @map("emotional_state")
+
+  // ── V2.1 时间性缓存 ──
+  companionsCount  Int       @default(0) @map("companions_count")
+  remainingQty     Int?      @map("remaining_qty")
+
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
   skus        ProductSku[]
@@ -484,4 +511,56 @@ model Banner {
   updatedAt DateTime   @updatedAt @map("updated_at")
 
   @@map("banners")
+}
+
+// ═══════════════════════════════════════════
+// 四、Brand OS V2.1 — CTA 配置 + 首页 CMS
+// ═══════════════════════════════════════════
+
+model CtaConfig {
+  id          Int      @id @default(autoincrement())
+  category    String   @unique    // explore | collection | purchase | cart | detail | order | search | contact
+  forbidden   String              // JSON array: 被禁止的电商文案
+  allowed     String              // JSON array: 允许的品牌文案
+  primary     String              // 首选文案
+  description String?             // 使用说明
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("cta_configs")
+}
+
+model TermConfig {
+  id          Int      @id @default(autoincrement())
+  concept     String   @unique    // product | user | collection | favorite | buy | shop | price
+  forbidden   String              // JSON array: 被禁止的词汇
+  allowed     String              // 允许的品牌词汇
+  note        String?             // 宪章依据说明
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("term_configs")
+}
+
+enum HomeSectionType {
+  SEE
+  ORIGIN
+  MEANING
+  CONNECTION
+}
+
+model HomeSection {
+  id              Int             @id @default(autoincrement())
+  type            HomeSectionType
+  sortOrder       Int             @default(0) @map("sort_order")
+  featuredWorkId  Int?            @map("featured_work_id")
+  featuredWork    Works?          @relation(fields: [featuredWorkId], references: [id])
+  content         String?         // 富文本内容
+  ctaText         String?         @map("cta_text")
+  ctaLink         String?         @map("cta_link")
+  isPublished     Boolean         @default(true) @map("is_published")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@map("home_sections")
 }

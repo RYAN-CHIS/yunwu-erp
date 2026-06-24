@@ -1,0 +1,424 @@
+/* ========== 允物 V5.0 · 数字化器物空间 ========== */
+/* 设计理念：东方器物叙事 / 策展式浏览 / 禁止电商促销 */
+/* V5.0 重构：去除毛玻璃 / 宣纸感底色 / 作品容器 / 缓慢动效 */
+/* 基准：允物品牌宪章 · Task 01-05 P0 全量修改 */
+
+page {
+  /* ── 墨色体系（品牌主色，源于松烟）── */
+  --yun-ink:          #2C241B;
+  --yun-ink-light:    #3A2A1A;
+  --yun-ink-muted:    #8C7660;
+  --yun-ink-faded:    #B8A898;
+
+  /* ── 土黄体系（品牌唯一强调色，源于大地）── */
+  --yun-earth:        #C8A972;
+  --yun-earth-light:  #D4BA8A;
+  --yun-earth-faded:  #E8D9B5;
+
+  /* ── 宣纸体系（底色，含物理感）── */
+  --yun-paper:        #F8F5EE;
+  --yun-paper-warm:   #FFFBEB;
+  --yun-paper-aged:   #F0E8D8;
+
+  /* ── 功能色 ── */
+  --yun-success:      #6B8E5A;
+  --yun-error:        #8B5E3C;
+
+  /* ── 边框（三阶墨线，非默认存在）── */
+  --yun-border:       rgba(44,36,27,0.08);    /* 极淡 · 分隔 */
+  --yun-border-medium:rgba(44,36,27,0.12);    /* 中墨 · 时间信息 */
+  --yun-border-strong:rgba(44,36,27,0.20);    /* 强墨 · 履历 */
+
+  /* ── 字号阶梯（物理感：大字如匾额，小字如批注）── */
+  --yun-text-hero:     48rpx;    /* 匾额 · 仅首屏 */
+  --yun-text-title:    36rpx;    /* 大题 · 页面标题 */
+  --yun-text-heading:  28rpx;    /* 小题 · 区段标题 */
+  --yun-text-body:     26rpx;    /* 正文 · 主体阅读 */
+  --yun-text-caption:  22rpx;    /* 批注 · 辅助说明 */
+  --yun-text-note:     20rpx;    /* 极批 · 时间信息/编号 */
+
+  /* ── 字重（克制：最多 500，禁止 700+）── */
+  --yun-weight-light:  200;      /* 仅匾额 */
+  --yun-weight-normal: 400;      /* 默认 · V2.1：避免中文发虚 */
+  --yun-weight-medium: 500;      /* 仅行内强调 */
+
+  /* ── 行高（呼吸感：模拟手卷阅读）── */
+  --yun-leading-tight: 1.6;      /* 仅标题 */
+  --yun-leading-body:  2.0;      /* 正文 */
+  --yun-leading-loose: 2.2;      /* 物语/叙事 */
+
+  /* ── 字间距（仪式感）── */
+  --yun-spacing-hero:  8rpx;     /* 匾额 · V2.1：避免展览海报感过强 */
+  --yun-spacing-title: 8rpx;     /* 大题 */
+  --yun-spacing-caption:4rpx;    /* 批注 */
+
+  /* ── 空间（V5.0 扩大留白）── */
+  --yun-space-1:  8rpx;
+  --yun-space-2:  16rpx;
+  --yun-space-3:  24rpx;
+  --yun-space-4:  32rpx;
+  --yun-space-6:  48rpx;         /* 正文段落间距（原 24rpx → 48rpx） */
+  --yun-space-8:  64rpx;
+  --yun-space-10: 80rpx;
+  --yun-space-13: 104rpx;        /* 区段内间距 */
+  --yun-space-16: 128rpx;
+  --yun-space-26: 208rpx;        /* 区段间距（原 64rpx → 208rpx） */
+
+  /* ── 动效（缓慢：器物不会跳起来）── */
+  --yun-ease-gentle:   cubic-bezier(0.25, 0.1, 0.25, 1);
+  --yun-duration-fast: 180ms;
+  --yun-duration-read: 280ms;
+  --yun-duration-slow: 500ms;
+
+  /* ── 全局底色（Task 02：宣纸感，禁止纯平面）── */
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0,0,0,.015), transparent 40%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,.03), transparent 50%),
+    #F8F5EE;
+
+  color: var(--yun-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: var(--yun-text-body);
+  font-weight: var(--yun-weight-normal);
+  line-height: var(--yun-leading-body);
+}
+
+/* ========== 作品容器 · Vessel ========== */
+/* Task 03：替代所有 card 类，册页/展签/器物承载体 */
+
+.yun-vessel {
+  border-top: 1rpx solid rgba(44,36,27,0.08);
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 2px;        /* V2.1：像器物边缘，非机械切割 */
+  background: transparent;
+  padding: var(--yun-space-6) 0;
+  transition: color var(--yun-duration-read) var(--yun-ease-gentle),
+              opacity var(--yun-duration-read) var(--yun-ease-gentle);
+}
+
+.yun-vessel-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.yun-vessel-title {
+  font-size: var(--yun-text-heading);
+  font-weight: var(--yun-weight-normal);
+  color: var(--yun-ink);
+  letter-spacing: var(--yun-spacing-title);
+  margin-top: var(--yun-space-3);
+  transition: color var(--yun-duration-read) var(--yun-ease-gentle);
+}
+
+/* Task 04：hover 仅允许墨→土黄 / opacity 变化 */
+.yun-vessel:hover .yun-vessel-title {
+  color: var(--yun-earth);
+}
+
+.yun-vessel-temporal {
+  font-size: var(--yun-text-note);
+  color: var(--yun-ink-faded);
+  letter-spacing: var(--yun-spacing-caption);
+  margin-top: var(--yun-space-2);
+}
+
+/* ========== 器物履历 · Provenance ========== */
+/* Task 06：替代 Product Spec */
+
+.yun-provenance {
+  border-top: 1rpx solid var(--yun-border-strong);
+  padding: var(--yun-space-8) 0 var(--yun-space-6);
+}
+
+.yun-provenance-title {
+  font-size: var(--yun-text-heading);
+  font-weight: var(--yun-weight-light);
+  color: var(--yun-ink);
+  letter-spacing: var(--yun-spacing-title);
+  margin-bottom: var(--yun-space-6);
+}
+
+.yun-provenance-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--yun-space-4);
+  padding: var(--yun-space-2) 0;
+}
+
+.yun-provenance-key {
+  font-size: var(--yun-text-note);
+  color: var(--yun-ink-faded);
+  letter-spacing: var(--yun-spacing-caption);
+  min-width: 120rpx;
+  text-align: right;
+}
+
+.yun-provenance-val {
+  font-size: var(--yun-text-caption);
+  color: var(--yun-ink-muted);
+  line-height: var(--yun-leading-body);
+}
+
+/* ========== 时间性 UI · Temporal ========== */
+/* Task 07：强化时间感 > 稀缺感 */
+
+.yun-temporal {
+  font-size: var(--yun-text-note);
+  color: var(--yun-ink-faded);
+  letter-spacing: var(--yun-spacing-caption);
+  line-height: var(--yun-leading-body);
+  border-top: 1rpx solid var(--yun-border-medium);
+  padding-top: var(--yun-space-3);
+}
+
+/* ========== 按钮系统 · Button ========== */
+/* Task 05：品牌语言替代电商语言 */
+
+.yun-btn {
+  font-size: var(--yun-text-caption);
+  font-weight: var(--yun-weight-normal);
+  letter-spacing: var(--yun-spacing-caption);
+  padding: var(--yun-space-3) var(--yun-space-8);
+  border-radius: 2px;        /* V2.1：像器物边缘，非机械切割 */
+  transition: color var(--yun-duration-read) var(--yun-ease-gentle),
+              background-color var(--yun-duration-read) var(--yun-ease-gentle);
+  cursor: pointer;
+}
+
+.yun-btn-primary {
+  background: var(--yun-ink);
+  color: var(--yun-paper);
+  border: none;
+}
+
+.yun-btn-primary:hover {
+  background: var(--yun-ink-light);
+}
+
+.yun-btn-secondary {
+  background: transparent;
+  color: var(--yun-ink-muted);
+  border: 1rpx solid var(--yun-earth-faded);
+}
+
+.yun-btn-secondary:hover {
+  color: var(--yun-earth);
+  border-color: var(--yun-earth);
+}
+
+/* ========== 首页 · Home ========== */
+/* Task 08：展览式四段结构 */
+
+.yun-home {
+  padding-bottom: 120rpx;
+}
+
+/* Section 01 · 见物 */
+.yun-home-see {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--yun-space-26) var(--yun-space-4);
+}
+
+.yun-home-work-name {
+  font-size: var(--yun-text-hero);
+  font-weight: var(--yun-weight-light);
+  color: var(--yun-ink);
+  letter-spacing: var(--yun-spacing-hero);
+  text-align: center;
+}
+
+.yun-home-work-image {
+  width: min(100%, 480rpx);
+  aspect-ratio: 1 / 1;
+  margin: var(--yun-space-16) 0;
+}
+
+.yun-home-temporal {
+  text-align: center;
+  font-size: var(--yun-text-note);
+  color: var(--yun-ink-faded);
+  letter-spacing: var(--yun-spacing-caption);
+}
+
+/* Section 02 · 知其来 */
+.yun-home-origin {
+  padding: var(--yun-space-26) var(--yun-space-4);
+}
+
+.yun-section-label {
+  font-size: var(--yun-text-note);
+  color: var(--yun-ink-faded);
+  letter-spacing: 12rpx;
+  margin-bottom: var(--yun-space-8);
+  padding-left: 4rpx;
+}
+
+.yun-origin-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--yun-space-4);
+  padding: var(--yun-space-3) 0;
+  border-top: 1rpx solid var(--yun-border);
+}
+
+.yun-origin-key {
+  font-size: var(--yun-text-note);
+  color: var(--yun-ink-faded);
+  letter-spacing: var(--yun-spacing-caption);
+  min-width: 120rpx;
+  text-align: right;
+}
+
+.yun-origin-val {
+  font-size: var(--yun-text-body);
+  color: var(--yun-ink-muted);
+  line-height: var(--yun-leading-body);
+}
+
+/* Section 03 · 知其意 */
+.yun-home-meaning {
+  padding: var(--yun-space-26) var(--yun-space-4);
+}
+
+.yun-meaning-text {
+  font-size: var(--yun-text-body);
+  color: var(--yun-ink-muted);
+  line-height: var(--yun-leading-loose);
+  text-indent: 2em;
+  text-align: justify;
+  max-width: 560rpx;
+  margin: 0 auto;
+}
+
+/* Section 04 · 结其缘 */
+.yun-home-cta {
+  padding: var(--yun-space-26) var(--yun-space-4);
+  text-align: center;
+}
+
+.yun-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--yun-text-caption);
+  font-weight: var(--yun-weight-normal);
+  letter-spacing: var(--yun-spacing-caption);
+  padding: var(--yun-space-6) var(--yun-space-13);
+  background: var(--yun-ink);
+  color: var(--yun-paper);
+  border-radius: 2px;        /* V2.1：像器物边缘，非机械切割 */
+  cursor: pointer;
+  transition: background-color var(--yun-duration-read) var(--yun-ease-gentle);
+}
+
+.yun-cta-btn:hover {
+  background: var(--yun-ink-light);
+}
+
+/* ========== 作品详情页 · Work Detail ========== */
+/* Task 06-07 集成 */
+
+.yun-work-detail {
+  padding-bottom: 160rpx;
+}
+
+.yun-work-name {
+  font-size: var(--yun-text-hero);
+  font-weight: var(--yun-weight-light);
+  color: var(--yun-ink);
+  letter-spacing: var(--yun-spacing-hero);
+  text-align: center;
+  padding: var(--yun-space-13) var(--yun-space-4);
+}
+
+.yun-work-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.yun-work-story {
+  border-top: 1rpx solid var(--yun-border);
+  padding: var(--yun-space-8) var(--yun-space-4);
+}
+
+.yun-work-story-text {
+  font-size: var(--yun-text-body);
+  color: var(--yun-ink-muted);
+  line-height: var(--yun-leading-loose);
+  text-indent: 2em;
+  text-align: justify;
+}
+
+/* ========== 七序页 · Sequence ========== */
+
+.yun-sequence-header {
+  text-align: center;
+  padding: var(--yun-space-26) var(--yun-space-4) var(--yun-space-8);
+}
+
+.yun-sequence-name {
+  font-size: var(--yun-text-hero);
+  font-weight: var(--yun-weight-light);
+  color: var(--yun-ink);
+  letter-spacing: var(--yun-spacing-hero);
+}
+
+.yun-sequence-tagline {
+  font-size: var(--yun-text-caption);
+  color: var(--yun-earth);
+  letter-spacing: var(--yun-spacing-caption);
+  margin-top: var(--yun-space-2);
+}
+
+.yun-sequence-desc {
+  font-size: var(--yun-text-body);
+  color: var(--yun-ink-muted);
+  line-height: var(--yun-leading-loose);
+  margin-top: var(--yun-space-6);
+  max-width: 560rpx;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ========== 输入框 · Input ========== */
+/* V2.1：恢复可用性，像器物容器，移动端友好 */
+
+.yun-input {
+  border: 1rpx solid rgba(44,36,27,0.06);
+  border-radius: 2px;
+  background: transparent;
+  padding: var(--yun-space-3) var(--yun-space-2);
+  font-size: var(--yun-text-body);
+  color: var(--yun-ink);
+  transition: border-color var(--yun-duration-read) var(--yun-ease-gentle);
+  outline: none;
+  width: 100%;
+}
+
+.yun-input:focus {
+  border-color: var(--yun-earth);
+}
+
+/* 禁止以下 CSS 属性出现在允物前台任何位置：
+ *
+ * ❌ backdrop-filter: blur()        → Task 01 禁止
+ * ❌ -webkit-backdrop-filter: blur() → Task 01 禁止
+ * ❌ transform: scale()             → Task 04 禁止
+ * ❌ transform: translateY()        → Task 04 禁止
+ * ❌ box-shadow (hover变化)          → Task 04 禁止
+ * ❌ border-radius (card/按钮)       → Task 03 禁止
+ * ❌ font-weight: 700+              → 宪章禁止
+ * ❌ 大面积 background 变化          → Task 04 禁止
+ *
+ * 允许仅：
+ * ✅ color 变化（墨→土黄）
+ * ✅ opacity 变化
+ * ✅ border-color 变化
+ * ✅ background-color 变化（仅按钮）
+ */

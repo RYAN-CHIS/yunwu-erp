@@ -1,0 +1,220 @@
+// ═══════════════════════════════════════════════════════════
+// 允物 · Platform 数据结构变更 · Prisma Schema V2.0
+// 基准：允物品牌宪章 · 前台视觉系统重构工单
+// 日期：2026-06-24
+// ═══════════════════════════════════════════════════════════
+
+// ── 说明 ──
+// 本文件仅包含需要新增/修改的模型字段。
+// 不修改现有核心模块（Products/SKU/BOM/Inventory/订单/客户）的基础结构。
+// 仅追加品牌化字段和前台展示所需的时间性数据。
+
+// ============================================================
+// 1. Work 模型 · 新增器物履历字段
+// ============================================================
+
+// Task 06：器物履历（替代 Product Spec）
+// 以下字段追加到现有 Work 模型
+
+model Work {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  story       String?                          // 物语 — 核心叙事文本
+  price       Int                              // 单位：分
+  images      String   @default("[]")          // JSON array (SQLite compat)
+  status      String   @default("draft")       // draft | published | archived
+
+  sequenceId  String
+  seriesId    String?
+
+  // ── 新增：器物履历字段 ──
+  materialOrigin   String?  @map("material_origin")    // 材质来源：「此物取材于 ××」
+  craftMethod      String?  @map("craft_method")       // 工艺方式：「经 ×× 工艺而成」
+  completionDate   DateTime? @map("completion_date")   // 完成时间：「完成于 ××」
+  serialNumber     String?  @map("serial_number")      // 编号序列：「YW-CH-2024-003」
+  creationStory    String?  @map("creation_story")     // 创作缘起：叙事段落
+  emotionalState   String?  @map("emotional_state")    // 适配心境：「宜于 ×× 时」
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  sequence    Sequence   @relation(fields: [sequenceId], references: [id])
+  series      Series?    @relation(fields: [seriesId], references: [id])
+  materials   WorkMaterial[]
+  orderItems  OrderItem[]
+  collects    Collect[]
+  products    Product[]
+
+  @@map("works")
+}
+
+
+// ============================================================
+// 2. Work 模型 · 新增时间性字段（通过关联实现）
+// ============================================================
+
+// Task 07：时间性 UI
+// companions_count 和 remaining_quantity 不直接存在 Work 模型中，
+// 而是通过 OrderItem 和 Sku.stock 聚合计算。
+// 为前台高效展示，新增缓存字段。
+
+model Work {
+  // ── 新增：时间性展示缓存 ──
+  companionsCount  Int     @default(0) @map("companions_count")    // 已陪伴同行者人数（缓存）
+  remainingQty     Int?    @map("remaining_qty")                   // 此批尚余件数（缓存，null=不限量）
+}
+
+
+// ============================================================
+// 3. Product 模型 · 新增器物履历字段
+// ============================================================
+
+// Product 同样需要履历字段（用于前台产品详情页）
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  workId      String?
+  sequenceId  String
+  description String?
+  story       String?
+  status      String   @default("draft")
+  pinned      Boolean  @default(false)
+  sortOrder   Int      @default(0)
+
+  // ── 新增：器物履历字段（与 Work 共享结构）──
+  materialOrigin   String?  @map("material_origin")
+  craftMethod      String?  @map("craft_method")
+  completionDate   DateTime? @map("completion_date")
+  serialNumber     String?  @map("serial_number")
+  creationStory    String?  @map("creation_story")
+  emotionalState   String?  @map("emotional_state")
+
+  // ── 新增：时间性缓存 ──
+  companionsCount  Int     @default(0) @map("companions_count")
+  remainingQty     Int?    @map("remaining_qty")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  work        Work?    @relation(fields: [workId], references: [id])
+  sequence    Sequence  @relation(fields: [sequenceId], references: [id])
+  skus        Sku[]
+  boms        Bom[]
+
+  @@map("products")
+}
+
+
+// ============================================================
+// 4. CTA 文案配置中心
+// ============================================================
+
+// 统一词库配置，保证 platform 输出统一
+
+model CtaConfig {
+  id           String   @id @default(cuid())
+  category     String   @unique          // explore | collection | purchase | cart | detail | order | search | contact
+  forbidden    String                     // JSON array: 被禁止的文案
+  allowed      String                     // JSON array: 允许的品牌文案
+  primary      String                     // 首选文案
+  description  String?                    // 使用说明
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("cta_configs")
+}
+
+
+// ============================================================
+// 5. 术语映射配置
+// ============================================================
+
+model TermConfig {
+  id           String   @id @default(cuid())
+  concept      String   @unique          // product | user | collection | favorite | buy | shop | price
+  forbidden    String                     // JSON array: 被禁止的词汇
+  allowed      String                     // 允许的品牌词汇
+  note         String?                    // 宪章依据说明
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("term_configs")
+}
+
+
+// ============================================================
+// 6. 首页 CMS 模块结构
+// ============================================================
+
+// Task 08：首页四段结构，后台可配置
+
+enum HomeSectionType {
+  SEE        // 见物 — 首屏一件作品
+  ORIGIN     // 知其来 — 材质/地域/工艺来源
+  MEANING    // 知其意 — 器物意义
+  CONNECTION // 结其缘 — CTA
+}
+
+model HomeSection {
+  id            String        @id @default(cuid())
+  type          HomeSectionType
+  sortOrder     Int           @default(0) @map("sort_order")
+
+  // 见物区：关联一件作品
+  featuredWorkId String?      @map("featured_work_id")
+  featuredWork   Work?        @relation(fields: [featuredWorkId], references: [id])
+
+  // 知其来/知其意：富文本内容
+  content        String?      // TipTap HTML 或纯文本
+
+  // 结其缘：CTA 配置
+  ctaText        String?      @map("cta_text")  // 默认「结缘此物」
+  ctaLink        String?      @map("cta_link")  // 链接地址
+
+  isPublished    Boolean       @default(true) @map("is_published")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@map("home_sections")
+}
+
+
+// ============================================================
+// 7. 图片上传规范提示
+// ============================================================
+
+// 不需要新增数据库表，而是在 MediaAsset 模型中增加上传提示字段
+
+model MediaAsset {
+  // ... 现有字段保持不变 ...
+
+  // ── 新增：品牌图片规范标记 ──
+  styleGuide    String?  @map("style_guide")   // natural | studio | lifestyle
+  // natural = 自然光/低饱和/保留材质颗粒
+  // studio = 禁止使用（电商白底）
+  // lifestyle = 禁止使用（过度修饰）
+
+  uploadHint    String?  @map("upload_hint")    // 上传时显示的规范提示
+  // 值：「自然光 · 低饱和 · 保留材质颗粒 · 禁纯白背景 · 禁过度锐化」
+}
+
+
+// ============================================================
+// 8. 数据迁移说明
+// ============================================================
+
+// 迁移步骤：
+// 1. prisma db push（仅新增字段/表，不删现有）
+// 2. 填充 CTA 词库 seed 数据（使用 cta-config.json）
+// 3. 填充术语映射 seed 数据
+// 4. 创建首页四段 section seed 数据
+// 5. 为现有 Work/Product 逐条补充履历字段（运营手动）
+// 6. 设置 companionsCount 初始值（从 OrderItem 聚合计算）
+// 7. 设置 remainingQty 初始值（从 Sku.stock 计算）
+
+// ⚠️ 注意：companionsCount 和 remainingQty 是缓存字段
+// 需要定时任务或事件触发更新：
+// - 新订单创建 → 更新 Work.companionsCount
+// - SKU 库存变化 → 更新 Product.remainingQty

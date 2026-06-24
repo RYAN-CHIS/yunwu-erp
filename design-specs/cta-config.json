@@ -1,0 +1,220 @@
+{
+  "meta": {
+    "version": "2.0",
+    "brand": "允物",
+    "charter_reference": "允物品牌宪章",
+    "updated": "2026-06-24",
+    "description": "CTA文案配置中心 · 品牌语言替换词库"
+  },
+
+  "cta_mapping": {
+    "explore": {
+      "forbidden": ["了解更多", "Learn more", "查看详情", "View details"],
+      "allowed":   ["观其意", "看诸物"],
+      "usage": {
+        "观其意": "通用探索引导 · 用于作品/文章入口",
+        "看诸物": "作品列表入口 · 用于首页/区段底部"
+      }
+    },
+
+    "collection": {
+      "forbidden": ["收藏作品", "Add to wishlist", "加入收藏", "Wishlist"],
+      "allowed":   ["留此念", "所留之念"],
+      "usage": {
+        "留此念":   "收藏操作按钮 · 单件作品收藏",
+        "所留之念": "收藏列表标题 · 用户收藏页"
+      }
+    },
+
+    "purchase": {
+      "forbidden": ["立即购买", "Buy now", "购买", "Purchase"],
+      "allowed":   ["结缘此物"],
+      "usage": {
+        "结缘此物": "购买确认按钮 · 作品详情页"
+      }
+    },
+
+    "cart": {
+      "forbidden": ["加入购物车", "Add to cart", "购物车", "Cart"],
+      "allowed":   ["暂寄此念", "六会"],
+      "usage": {
+        "暂寄此念": "加入购物车操作 · 单件作品",
+        "六会":     "购物车页面标题 · 导航入口"
+      }
+    },
+
+    "detail": {
+      "forbidden": ["产品详情", "Product details", "商品详情", "Item details"],
+      "allowed":   ["器物履历"],
+      "usage": {
+        "器物履历": "详情页标题/入口 · 替代 Product Spec"
+      }
+    },
+
+    "order": {
+      "forbidden": ["确认订单", "Checkout", "提交订单", "Place order"],
+      "allowed":   ["确认缘起"],
+      "usage": {
+        "确认缘起": "订单确认页标题/按钮"
+      }
+    },
+
+    "order_detail": {
+      "forbidden": ["订单详情", "Order details", "我的订单", "My orders"],
+      "allowed":   ["此缘之始", "诸缘记录"],
+      "usage": {
+        "此缘之始": "单个订单详情页标题",
+        "诸缘记录": "订单列表页标题"
+      }
+    },
+
+    "search": {
+      "forbidden": ["搜索", "Search", "搜索产品", "Search products"],
+      "allowed":   ["寻物"],
+      "usage": {
+        "寻物": "搜索输入框 placeholder"
+      }
+    },
+
+    "contact": {
+      "forbidden": ["联系我们", "Contact us", "客服", "Customer service"],
+      "allowed":   ["与允物对话"],
+      "usage": {
+        "与允物对话": "联系入口/客服标题"
+      }
+    }
+  },
+
+  "terminology": {
+    "product": {
+      "forbidden": ["产品", "Product", "商品", "Item", "Goods"],
+      "allowed":   "作品",
+      "note": "宪章：器物体系定义，作品是人与器物关系的载体"
+    },
+
+    "user": {
+      "forbidden": ["用户", "User", "顾客", "Customer", "买家", "Buyer"],
+      "allowed":   "同行者",
+      "note": "宪章第十一篇：同行者，不拥有用户，只陪伴同行"
+    },
+
+    "collection_list": {
+      "forbidden": ["全部作品", "All products", "产品列表", "Product list"],
+      "allowed":   "诸物",
+      "note": "诸物 · 作品集合的雅称"
+    },
+
+    "favorite": {
+      "forbidden": ["收藏", "Favorite", "Wishlist", "喜欢", "Like"],
+      "allowed":   "留念",
+      "note": "留念 · 记住而非占有"
+    },
+
+    "buy_action": {
+      "forbidden": ["购买", "Buy", "下单", "Order", "付款", "Pay"],
+      "allowed":   "结缘",
+      "note": "结缘 · 人与器物相遇，而非交易"
+    },
+
+    "shop": {
+      "forbidden": ["商店", "Shop", "商城", "Store"],
+      "allowed":   "器物空间",
+      "note": "器物空间 · 数字化器物空间而非电商"
+    },
+
+    "price": {
+      "forbidden": ["价格", "Price", "售价", "Selling price"],
+      "allowed":   "结缘之资",
+      "note": "结缘之资 · 温润表达价格概念，但仅用于后台/详情，前台不强调"
+    },
+
+    "discount": {
+      "forbidden": ["折扣", "Discount", "优惠", "Sale", "促销", "Promotion", "特价", "Special offer"],
+      "allowed":   null,
+      "note": "禁止 · 宪章：不利用焦虑销售，不追求一次成交"
+    }
+  },
+
+  "temporal_templates": {
+    "completion_date": {
+      "template": "完成于 {relative_time}",
+      "examples": ["完成于三日前", "完成于丙辰年仲秋", "完成于今春"],
+      "forbidden": ["刚上市", "新品", "New arrival", "最新上架"],
+      "note": "强调时间感而非新鲜感"
+    },
+
+    "companions_count": {
+      "template": "已陪伴 {n} 位同行者",
+      "examples": ["已陪伴 17 位同行者", "已陪伴 3 位同行者"],
+      "forbidden": ["已售 × 件", "× 人购买", "× sold", "热门"],
+      "note": "陪伴而非购买 · 禁止制造消费焦虑"
+    },
+
+    "remaining_quantity": {
+      "template": "此批尚余 {n} 件",
+      "examples": ["此批尚余 2 件", "此批尚余 7 件"],
+      "forbidden": ["仅剩 × 件", "即将售罄", "最后 × 件", "即将断货", "Low stock", "Almost sold out"],
+      "note": "陈述而非催促 · 禁止稀缺焦虑"
+    }
+  },
+
+  "provenance_fields": {
+    "material_origin": {
+      "label": "材质",
+      "template": "此物取材于 {origin}",
+      "examples": ["此物取材于闽南老山沉香"]
+    },
+    "craft_method": {
+      "label": "工艺",
+      "template": "经 {method} 而成",
+      "examples": ["经传统篆刻刀法而成"]
+    },
+    "completion_date": {
+      "label": "完成",
+      "template": "完成于 {date}",
+      "examples": ["完成于丙辰年仲秋"]
+    },
+    "serial_number": {
+      "label": "编号",
+      "template": "{number}",
+      "examples": ["YW-CH-2024-003"]
+    },
+    "creation_story": {
+      "label": "缘起",
+      "template": "{story_text}",
+      "note": "叙事段落，不是卖点罗列"
+    },
+    "emotional_state": {
+      "label": "心境",
+      "template": "宜于 {state} 时",
+      "examples": ["宜于独处静思之时", "宜于欢喜初见之时"]
+    }
+  },
+
+  "homepage_sections": {
+    "section_01": {
+      "name": "见物",
+      "description": "首屏仅展示一件作品。禁止carousel、多列产品墙、滑动推荐。",
+      "cta": null,
+      "note": "像展览开场，先见一物"
+    },
+    "section_02": {
+      "name": "知其来",
+      "description": "展示材质来源、地域来源、工艺来源。先让物成立。",
+      "cta": null,
+      "fields": ["material_origin", "craft_method", "completion_date"]
+    },
+    "section_03": {
+      "name": "知其意",
+      "description": "器物为何存在。不是卖点，是意义。",
+      "cta": null,
+      "note": "叙事段落，不是产品规格"
+    },
+    "section_04": {
+      "name": "结其缘",
+      "description": "最后才允许CTA。",
+      "cta": "结缘此物",
+      "note": "先见 → 再知 → 再懂 → 再缘"
+    }
+  }
+}
