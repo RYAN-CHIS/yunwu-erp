@@ -69,11 +69,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow login, forgot-password, reset-password pages
+  // Allow login, forgot-password, reset-password, and PDP pages
   if (
     pathname === "/login" ||
     pathname === "/forgot-password" ||
-    pathname === "/reset-password"
+    pathname === "/reset-password" ||
+    pathname.startsWith("/products/")
   ) {
     return NextResponse.next();
   }
